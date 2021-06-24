@@ -2,7 +2,6 @@ import telebot
 import youtube_dl
 from pathlib import Path
 
-from youtube_dl import utils
 from utils import Utils
 
 bot = telebot.TeleBot(Utils.TOKEN)
@@ -83,8 +82,7 @@ def real_download(message):
     bot.send_audio(message.chat.id, audio=open(
         file_path[0], 'rb'), caption=url)
     bot.delete_message(message.chat.id, message.message_id + 1)
-    # clear tmp_song (debugging reason)
-    [file.unlink() for file in file_path]
+    [file.unlink() for file in file_path]  # clear tmp_song (debugging reason)
     return
 
 

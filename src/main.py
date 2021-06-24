@@ -11,16 +11,18 @@ bot = telebot.TeleBot(Utils.TOKEN)
 def send_author(message):
     bot.reply_to(
         message,
-        ('Comandi disponibili:,'
-         '/yt -> scaricare canzoni da youtube,'
-         '/pornhub -> lo scopri (Inserisci un nome insieme al comando),'
-         '/shaggy -> foto di shaggy,'
+        ('❗ I comandi con * richiedono un nome dopo il comando ❗,'
+         'Comandi disponibili:,'
+         '🔺 /yt -> * scaricare canzoni da youtube,'
+         '🔺 /pornhub -> * lo scopri,'
+         '🔺 /shaggy -> foto di shaggy,'
          'Made by @ilginop,').replace(',', '\n')
     )
 
 
 '''
-This shit is needed because if i forget how to handle all other message i don't need to search in doc
+This shit is needed because if i forget how to handle
+all other message i don't need to search in doc
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     bot.reply_to(message, message.text)
@@ -56,14 +58,13 @@ def handle_message(message):
 
 @bot.message_handler(commands=["yt"])
 def yt_download(message):
-    msg = bot.reply_to(message, "Inserire link youtube: ")
-    bot.register_next_step_handler(msg, real_download)
-    return
-
-
-def real_download(message):
     bot.send_message(message.chat.id, text=" 📥 Downloading... 📥")
-    msg = message.text
+    msg = str(message.text[4:])
+    if not len(msg):
+        return bot.edit_message_text(
+            chat_id=message.chat.id, 
+            message_id=message.message_id + 1,
+            text="Not a valid link")
     try:
         video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
             msg, download=False)
@@ -80,7 +81,7 @@ def real_download(message):
     # changes some characters sometimes (idk how it works)
     file_path = list(Path('tmp_song').rglob('*'))
     bot.send_audio(message.chat.id, audio=open(
-        file_path[0], 'rb'), caption=url)
+        file_path[0], 'rb'), caption=file_path[0].name)
     bot.delete_message(message.chat.id, message.message_id + 1)
     [file.unlink() for file in file_path]  # clear tmp_song (debugging reason)
     return

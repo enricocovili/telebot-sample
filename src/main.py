@@ -11,12 +11,8 @@ bot = telebot.TeleBot(Utils.TOKEN)
 def send_author(message):
     bot.reply_to(
         message,
-        ('❗ I comandi con * richiedono un nome dopo il comando ❗,'
-         'Comandi disponibili:,'
-         '🔺 /yt -> * scaricare canzoni da youtube,'
-         '🔺 /pornhub -> * lo scopri,'
-         '🔺 /shaggy -> foto di shaggy,'
-         'Made by @ilginop,').replace(',', '\n')
+        ('🇮🇹 Pizza Pasta Mandolino 🇮🇹,'
+         'Made by @ilginop,').replace(',', '\n'),
     )
 
 
@@ -33,17 +29,19 @@ def echo_all(message):
 
 @bot.message_handler(commands=["shaggy"])
 def shaggy_message(message):
-    markup = telebot.types.ReplyKeyboardMarkup(
-        row_width=3, resize_keyboard=True, one_time_keyboard=True)
+    
+    # MAARKUP TESTS
+    # markup = telebot.types.ReplyKeyboardMarkup(
+    #     row_width=3, resize_keyboard=True, one_time_keyboard=True)
 
-    # Creates a 3x3 table for KeyboardButton
-    for i in range(3):
-        util = []
-        for j in range(3):
-            util.append(telebot.types.KeyboardButton('a'))
-        markup.add(*util)  # passes the list as separated items
+    # # Creates a 3x3 table for KeyboardButton
+    # for i in range(3):
+    #     util = []
+    #     for j in range(3):
+    #         util.append(telebot.types.KeyboardButton('a'))
+    #     markup.add(*util)  # passes the list as separated items
     bot.send_photo(message.chat.id, open(
-        'shaggy.jpeg', 'rb'), reply_markup=markup)
+        'shaggy.jpeg', 'rb'))
 
 # manage all !pornhub messages
 
@@ -64,7 +62,7 @@ def yt_download(message):
         return bot.edit_message_text(
             chat_id=message.chat.id, 
             message_id=message.message_id + 1,
-            text="Not a valid link")
+            text="Write the name of the song after the command!")
     try:
         video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
             msg, download=False)

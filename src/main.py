@@ -16,29 +16,20 @@ def send_author(message):
     )
 
 
-'''
-This shit is needed because if i forget how to handle
-all other message i don't need to search in doc
-@bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    bot.reply_to(message, message.text)
-'''
-
 # a cursed shaggy image
 
 
 @bot.message_handler(commands=["shaggy"])
 def shaggy_message(message):
     
-    # MAARKUP TESTS
+    # MARKUP TESTS
     # markup = telebot.types.ReplyKeyboardMarkup(
     #     row_width=3, resize_keyboard=True, one_time_keyboard=True)
 
     # # Creates a 3x3 table for KeyboardButton
     # for i in range(3):
     #     util = []
-    #     for j in range(3):
-    #         util.append(telebot.types.KeyboardButton('a'))
+    #     [ util.append(telebot.types.KeyboardButton('a')) for j in range(3) ]
     #     markup.add(*util)  # passes the list as separated items
     bot.send_photo(message.chat.id, open(
         'shaggy.jpeg', 'rb'))
@@ -60,9 +51,10 @@ def yt_download(message):
     msg = str(message.text[4:])
     if not len(msg):
         return bot.edit_message_text(
-            chat_id=message.chat.id, 
+            chat_id=message.chat.id,
             message_id=message.message_id + 1,
-            text="Write the name of the song after the command!")
+            text="Write the name of the song after the command!\n"
+                 "(example: /yt despacito)")
     try:
         video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
             msg, download=False)
@@ -83,6 +75,14 @@ def yt_download(message):
     bot.delete_message(message.chat.id, message.message_id + 1)
     [file.unlink() for file in file_path]  # clear tmp_song (debugging reason)
     return
+
+# This shit is needed because if i forget how to handle
+# all other message i don't need to search in doc
+
+
+@bot.message_handler(func=lambda message: True)
+def echo_all(message):
+    bot.reply_to(message, message.text)
 
 
 bot.polling()

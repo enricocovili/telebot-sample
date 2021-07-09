@@ -8,6 +8,8 @@ load_dotenv()
 class Utils:
 
     TOKEN = os.getenv('BOT_TOKEN')
+    USER = os.getenv('USER')
+    PASSWORD = os.getenv('PASSWORD')
 
     out_tmpl_ytdl = Path('tmp_song/%(title)s.mp3')
 

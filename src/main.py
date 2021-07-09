@@ -84,36 +84,33 @@ def get_url(msg):
 
 @bot.message_handler(commands=['getip'])
 def get_ip(message):
-    bot.send_message(message.chat.id, text="User:")
-    bot.register_next_step_handler(message, user_check)
+    bot.send_message(
+        message.chat.id,
+        text="Insert User and password: (Example below):\nusername\npassword"
+    )
+    bot.register_next_step_handler(message, credential_check)
 
 
-def user_check(message):
-    if message.text == Utils.USER:
-        bot.reply_to(message, 'Password:')
-        return bot.register_next_step_handler(message, password_check)
-    # bot.delete_message(message.chat.id, message.message_id+1)
-    [bot.delete_message(message.chat.id, message.message_id - i)
-     for i in reversed(range(0, 2))]
-    bot.send_message(message.chat.id, text='❌ Wrong user ❌')
-
-
-def password_check(message):
-    if message.text == Utils.PASSWORD:
+def credential_check(message):
+    if message.text == Utils.USER + '\n' + Utils.PASSWORD:
         ip = get('https://api.ipify.org').text
         bot.send_message(message.chat.id, f'Ip address: {ip}')
+    # bot.delete_message(message.chat.id, message.message_id+1)
     else:
-        bot.send_message(message.chat.id, '❌ Wrong password ❌')
+        bot.send_message(message.chat.id, text='❌ Wrong user/password ❌')
 
     [bot.delete_message(message.chat.id, message.message_id - i)
-     for i in reversed(range(0, 4))]
+     for i in reversed(range(0, 2))]
+
 # This shit is needed because if i forget how to handle
 # all other message i don't need to search in doc
 
 
 # @bot.message_handler(func=lambda message: True)
 # def echo_all(message):
-#     bot.reply_to(message, message.text)
+    # print(message.text.replace)
+    # bot.reply_to(message, message.text)
+
 
 bot.enable_save_next_step_handlers()
 bot.load_next_step_handlers()

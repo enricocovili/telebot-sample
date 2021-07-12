@@ -1,8 +1,10 @@
+from os import terminal_size
 import requests
 import telebot
 import youtube_dl
 from pathlib import Path
 from requests import get
+from youtube_dl.utils import YoutubeDLError
 from utils import Utils
 
 bot = telebot.TeleBot(Utils.TOKEN)
@@ -57,6 +59,9 @@ def yt_download(message):
             text="Write the name of the song after the command!\n"
                  "(example: /yt despacito)")
     url = get_url(msg)
+    if url == 1:
+        bot.delete_message(message.chat.id, message.message_id+1)
+        return bot.send_message(message.chat.id, text="❌ An error occured ❌")
     youtube_dl.YoutubeDL(Utils.ydl_opts).download([url])
     # get a list of all the files in tmp_song, and takes only the first one
     # Spoiler: there is only one file in it because yt_dl download
@@ -74,11 +79,17 @@ def get_url(msg):
         video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
             msg, download=False)
         url = msg
-    except Exception:
+    except youtube_dl.utils.DownloadError:
+        # print(e)
         msg = "ytsearch:" + msg
-        video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
-            msg, download=False)
+        try:
+            video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
+                msg, download=False)
+        except youtube_dl.utils.DownloadError:
+            return 1
         url = video_info.get('entries')[0].get('webpage_url')
+    except Exception:
+        return 1
     return url
 
 
@@ -101,6 +112,7 @@ def credential_check(message):
 
     [bot.delete_message(message.chat.id, message.message_id - i)
      for i in reversed(range(0, 2))]
+
 
 # This shit is needed because if i forget how to handle
 # all other message i don't need to search in doc

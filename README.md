@@ -9,6 +9,7 @@ git clone https://github.com/ginop-1/telebot-sample.git
 cd telebot-sample
 python3 -m venv venv
 . venv/bin/activate
+pip3 install -r requirements.txt
 python3 src/main.py
 ```
 

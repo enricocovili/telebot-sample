@@ -1,5 +1,4 @@
 from os import terminal_size
-import requests
 import telebot
 import youtube_dl
 from pathlib import Path

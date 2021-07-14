@@ -8,6 +8,8 @@
   <img src="https://img.shields.io/github/languages/top/ginop-1/telebot-sample?style=for-the-badge" />
 </p>
 
+---
+
 ### Get it working:
 ```
 git clone https://github.com/ginop-1/telebot-sample.git

@@ -1,7 +1,12 @@
 # YT-Downloader
-##### simple telegram bot that download music from yt and other useless stuff
-
-### Built using: [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBotAPI)
+##### 
+<p align="center">simple telegram bot that download music from yt and other useless stuff </p>
+<p align="center">
+<a href="https://github.com/eternnoir/pyTelegramBotAPI">
+  <img src="https://img.shields.io/badge/BUILT%20USING-PyTelegramBotApi-blue?style=for-the-badge" /></a>
+  <img src="https://img.shields.io/github/license/ginop-1/telebot-sample?style=for-the-badge" />
+  <img src="https://img.shields.io/github/languages/top/ginop-1/telebot-sample?style=for-the-badge" />
+</p>
 
 ### Get it working:
 ```

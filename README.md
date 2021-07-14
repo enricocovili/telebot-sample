@@ -1,6 +1,6 @@
-# YT-Downloader
-##### 
-<p align="center">simple telegram bot that download music from yt and other useless stuff </p>
+<h1 align="center"> Gino's BOT </h1>
+
+<h5 align="center">simple telegram bot that download music from yt and other useless stuff </h5>
 <p align="center">
 <a href="https://github.com/eternnoir/pyTelegramBotAPI">
   <img src="https://img.shields.io/badge/BUILT%20USING-PyTelegramBotApi-blue?style=for-the-badge" /></a>
@@ -18,6 +18,6 @@ pip3 install -r requirements.txt
 python3 src/main.py
 ```
 
-#### Usage
+### Usage
 
 Remember to  ``` . env/bin/activate ``` before executing ```main.py``` every time you want to run the program

@@ -10,6 +10,7 @@ class Utils:
     TOKEN = os.getenv('BOT_TOKEN')
     USER = os.getenv('USER')
     PASSWORD = os.getenv('PASSWORD')
+    GINO_ID=os.getenv('GINO_ID')
 
     out_tmpl_ytdl = Path('tmp_song/%(title)s.mp3')
 

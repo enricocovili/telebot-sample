@@ -1,10 +1,8 @@
-from os import terminal_size
 import telebot
 import youtube_dl
 from pathlib import Path
-from requests import get
-from youtube_dl.utils import YoutubeDLError
 from utils import Utils
+import subprocess
 
 bot = telebot.TeleBot(Utils.TOKEN)
 
@@ -72,45 +70,53 @@ def yt_download(message):
     [file.unlink() for file in file_path]  # clear tmp_song (debugging reason)
     return
 
+@bot.message_handler(commands=["netstats"])
+def netstats(message):
+  msg = message.text.split()
+  if len(msg) != 3 or msg[1] != Utils.USER or msg[2] != Utils.PASSWORD:
+    return bot.reply_to(
+      message,
+      "❌ Invalid Username/Password ❌"
+    )
+  output = subprocess.check_output(["net-info.sh"]).decode("utf-8")
+  return bot.reply_to(
+    message,
+    output,
+  )
+
+@bot.message_handler(commands=["exec"])
+def exec(message):
+  if message.from_user.id != int(Utils.GINO_ID):
+    return
+  msg = message.text.split()
+  del msg[0]
+  try:
+    output = subprocess.check_output([*msg]).decode("utf-8")
+  except Exception as e:
+    output = e
+
+  return bot.reply_to(
+    message,
+    output,
+  )
 
 def get_url(msg):
-    try:
-        video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
-            msg, download=False)
-        url = msg
-    except youtube_dl.utils.DownloadError:
-        # print(e)
-        msg = "ytsearch:" + msg
-        try:
-            video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
-                msg, download=False)
-        except youtube_dl.utils.DownloadError:
-            return 1
-        url = video_info.get('entries')[0].get('webpage_url')
-    except Exception:
-        return 1
-    return url
-
-
-@bot.message_handler(commands=['getip'])
-def get_ip(message):
-    bot.send_message(
-        message.chat.id,
-        text="Insert User and password: (Example below):\nusername\npassword"
-    )
-    bot.register_next_step_handler(message, credential_check)
-
-
-def credential_check(message):
-    if message.text == Utils.USER + '\n' + Utils.PASSWORD:
-        ip = get('https://api.ipify.org').text
-        bot.send_message(message.chat.id, f'Ip address: {ip}')
-    # bot.delete_message(message.chat.id, message.message_id+1)
-    else:
-        bot.send_message(message.chat.id, text='❌ Wrong user/password ❌')
-
-    [bot.delete_message(message.chat.id, message.message_id - i)
-     for i in reversed(range(0, 2))]
+  try:
+      video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
+          msg, download=False)
+      url = msg
+  except youtube_dl.utils.DownloadError:
+      # print(e)
+      msg = "ytsearch:" + msg
+      try:
+          video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
+              msg, download=False)
+      except youtube_dl.utils.DownloadError:
+          return 1
+      url = video_info.get('entries')[0].get('webpage_url')
+  except Exception:
+      return 1
+  return url
 
 
 # This shit is needed because if i forget how to handle

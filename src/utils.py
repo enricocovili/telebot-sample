@@ -7,18 +7,18 @@ load_dotenv()
 
 class Utils:
 
-    TOKEN = os.getenv('BOT_TOKEN')
-    USER = os.getenv('USER')
-    PASSWORD = os.getenv('PASSWORD')
-    GINO_ID=os.getenv('GINO_ID')
+    TOKEN = os.getenv("BOT_TOKEN")
+    USER = os.getenv("USER")
+    PASSWORD = os.getenv("PASSWORD")
+    GINO_ID = int(os.getenv("GINO_ID"))
 
-    out_tmpl_ytdl = Path('tmp_song/%(title)s.mp3')
+    out_tmpl_ytdl = Path("tmp_song/%(title)s.mp3")
 
     ydl_opts = {
-        'format': 'bestaudio',
-        'logtostderr': False,
-        'quiet': True,
-        'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-        'outtmpl': str(out_tmpl_ytdl),
-        'nooverwrites': False,
+        "format": "bestaudio",
+        "logtostderr": False,
+        "quiet": True,
+        "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+        "outtmpl": str(out_tmpl_ytdl),
+        "nooverwrites": False,
     }

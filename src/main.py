@@ -49,7 +49,7 @@ def handle_message(message):
 @bot.message_handler(commands=["yt"])
 def yt_download(message):
     bot.send_message(message.chat.id, text=" 📥 Downloading... 📥")
-    msg = str(message.text[4:])
+    msg = " ".join(message.text.split()[1:])
     if not len(msg):
         return bot.edit_message_text(
             chat_id=message.chat.id,

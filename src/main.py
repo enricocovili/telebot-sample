@@ -4,14 +4,62 @@ from pathlib import Path
 from utils import Utils
 import subprocess
 
+
+def makeKeyboard():
+    markup = telebot.types.InlineKeyboardMarkup()
+
+    markup.add(
+        telebot.types.InlineKeyboardButton(
+            text="O",
+            callback_data="youtube download",
+        ),
+        telebot.types.InlineKeyboardButton(text="X", callback_data="shaggy"),
+    )
+
+    return markup
+
+
 bot = telebot.TeleBot(Utils.TOKEN)
+
+
+@bot.callback_query_handler(func=lambda call: True)
+def handle_query(call: telebot.types.CallbackQuery):
+
+    # SAMPLE RESPONSE WITH ALERT
+    # bot.answer_callback_query(
+    #     callback_query_id=call.id, show_alert=True, text="You Clicked "
+    # )
+
+    if call.data.startswith("shaggy"):
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        shaggy_message(call.message)
+
+    if call.data.startswith("youtube"):
+        bot.edit_message_text(
+            chat_id=call.message.chat.id,
+            text="Youtube DL",
+            message_id=call.message.message_id,
+            parse_mode="HTML",
+        )
 
 
 @bot.message_handler(commands=["start", "help"])
 def send_author(message):
+    # # MARKUP TESTS
+    # markup = telebot.types.InlineKeyboardButton(
+    #     row_width=3, resize_keyboard=True, one_time_keyboard=True
+    # )
+
+    # # Creates a 3x3 table for KeyboardButton
+    # for _ in range(3):
+    #     util = []
+    #     [util.append(telebot.types.InlineKeyboardButton("a")) for _ in range(3)]
+    #     markup.add(*util)  # passes the list as separated items
+
     bot.reply_to(
         message,
         ("🇮🇹 Pizza Pasta Mandolino 🇮🇹," "Made by @ilginop,").replace(",", "\n"),
+        reply_markup=makeKeyboard(),
     )
 
 
@@ -20,16 +68,6 @@ def send_author(message):
 
 @bot.message_handler(commands=["shaggy"])
 def shaggy_message(message):
-
-    # MARKUP TESTS
-    # markup = telebot.types.ReplyKeyboardMarkup(
-    #     row_width=3, resize_keyboard=True, one_time_keyboard=True)
-
-    # # Creates a 3x3 table for KeyboardButton
-    # for i in range(3):
-    #     util = []
-    #     [ util.append(telebot.types.KeyboardButton('a')) for j in range(3) ]
-    #     markup.add(*util)  # passes the list as separated items
     bot.send_photo(message.chat.id, open("shaggy.jpeg", "rb"))
 
 
@@ -57,7 +95,7 @@ def yt_download(message):
             text="Write the name of the song after the command!\n"
             "(example: /yt despacito)",
         )
-    url = get_url(msg)
+    url = Utils.get_url(msg)
     if url == 1:
         bot.delete_message(message.chat.id, message.message_id + 1)
         return bot.send_message(message.chat.id, text="❌ An error occured ❌")
@@ -105,27 +143,6 @@ def exec(message):
         message,
         output,
     )
-
-
-def get_url(msg):
-    try:
-        video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
-            msg, download=False
-        )
-        url = msg
-    except youtube_dl.utils.DownloadError:
-        # print(e)
-        msg = "ytsearch:" + msg
-        try:
-            video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
-                msg, download=False
-            )
-        except youtube_dl.utils.DownloadError:
-            return 1
-        url = video_info.get("entries")[0].get("webpage_url")
-    except Exception:
-        return 1
-    return url
 
 
 # This shit is needed because if i forget how to handle

@@ -140,3 +140,5 @@ cython_debug/
 .vscode
 tmp_song/*
 .handler-saves
+*.session
+*.session-journal

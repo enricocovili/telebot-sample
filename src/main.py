@@ -1,150 +1,112 @@
-import telebot
+from telethon import TelegramClient, events
+import asyncio
 import youtube_dl
 from pathlib import Path
 from utils import Utils
 import subprocess
 
-
-def makeKeyboard():
-    markup = telebot.types.InlineKeyboardMarkup()
-
-    markup.add(
-        telebot.types.InlineKeyboardButton(
-            text="O",
-            callback_data="youtube download",
-        ),
-        telebot.types.InlineKeyboardButton(text="X", callback_data="shaggy"),
-    )
-
-    return markup
+# event: events.newmessage.NewMessage.Event
 
 
-bot = telebot.TeleBot(Utils.TOKEN)
+def pattern_constructor(patterns: list):
+    res = [r"".join(f"(/{pattern})|" for pattern in patterns)][0]
+    return res[:-1]
 
 
-@bot.callback_query_handler(func=lambda call: True)
-def handle_query(call: telebot.types.CallbackQuery):
-
-    # SAMPLE RESPONSE WITH ALERT
-    # bot.answer_callback_query(
-    #     callback_query_id=call.id, show_alert=True, text="You Clicked "
-    # )
-
-    if call.data.startswith("shaggy"):
-        bot.delete_message(call.message.chat.id, call.message.message_id)
-        shaggy_message(call.message)
-
-    if call.data.startswith("youtube"):
-        bot.edit_message_text(
-            chat_id=call.message.chat.id,
-            text="Youtube DL",
-            message_id=call.message.message_id,
-            parse_mode="HTML",
-        )
+bot = TelegramClient("bot", api_id=Utils.APP_ID, api_hash=Utils.APP_HASH).start(
+    bot_token=Utils.TOKEN
+)
 
 
-@bot.message_handler(commands=["start", "help"])
-def send_author(message):
-    # # MARKUP TESTS
-    # markup = telebot.types.InlineKeyboardButton(
-    #     row_width=3, resize_keyboard=True, one_time_keyboard=True
-    # )
-
-    # # Creates a 3x3 table for KeyboardButton
-    # for _ in range(3):
-    #     util = []
-    #     [util.append(telebot.types.InlineKeyboardButton("a")) for _ in range(3)]
-    #     markup.add(*util)  # passes the list as separated items
-
-    bot.reply_to(
-        message,
+@bot.on(events.NewMessage(pattern=pattern_constructor(["help", "start"])))
+async def send_author(event):
+    await event.reply(
         ("🇮🇹 Pizza Pasta Mandolino 🇮🇹," "Made by @ilginop,").replace(",", "\n"),
-        reply_markup=makeKeyboard(),
     )
-
-
-# a cursed shaggy image
-
-
-@bot.message_handler(commands=["shaggy"])
-def shaggy_message(message):
-    bot.send_photo(message.chat.id, open("shaggy.jpeg", "rb"))
-
-
-# manage all !pornhub messages
-
-
-@bot.message_handler(commands=["pornhub"])
-def handle_message(message):
-    handeld_message = message.text[9:]
-    bot.reply_to(
-        message,
-        "https://www.pornhub.com/video/search?search="
-        + handeld_message.replace(" ", "+"),
-    )
-
-
-@bot.message_handler(commands=["yt"])
-def yt_download(message):
-    bot.send_message(message.chat.id, text=" 📥 Downloading... 📥")
-    msg = " ".join(message.text.split()[1:])
-    if not len(msg):
-        return bot.edit_message_text(
-            chat_id=message.chat.id,
-            message_id=message.message_id + 1,
-            text="Write the name of the song after the command!\n"
-            "(example: /yt despacito)",
-        )
-    url = Utils.get_url(msg)
-    if url == 1:
-        bot.delete_message(message.chat.id, message.message_id + 1)
-        return bot.send_message(message.chat.id, text="❌ An error occured ❌")
-    youtube_dl.YoutubeDL(Utils.ydl_opts).download([url])
-    # get a list of all the files in tmp_song, and takes only the first one
-    # Spoiler: there is only one file in it because yt_dl download
-    # changes some characters sometimes (idk how it works)
-    file_path = list(Path("tmp_song").rglob("*"))
-    bot.send_audio(
-        message.chat.id,
-        audio=open(file_path[0], "rb"),
-        caption=file_path[0].name,
-    )
-    bot.delete_message(message.chat.id, message.message_id + 1)
-    [file.unlink() for file in file_path]  # clear tmp_song (debugging reason)
     return
 
 
-@bot.message_handler(commands=["netstats"])
-def netstats(message):
-    msg_id = message.id
-    msg = message.text.split()
-    if len(msg) != 3 or msg[1] != Utils.USER or msg[2] != Utils.PASSWORD:
-        return bot.reply_to(message, "❌ Invalid Username/Password ❌")
-    output = subprocess.check_output(["net-info.sh"]).decode("utf-8")
-    bot.send_message(
-        message.chat.id,
-        output,
+@bot.on(events.NewMessage(pattern="/shaggy"))
+async def shaggy(event):
+    await bot.send_file(event.chat, "./shaggy.jpeg", caption="Shaggy")
+    return
+
+
+@bot.on(events.NewMessage(pattern="/pornhub"))
+async def pornhub(event):
+    handeld_message = event.text[9:]
+    await bot.send_message(
+        event.chat,
+        "https://www.pornhub.com/video/search?search="
+        + handeld_message.replace(" ", "+"),
     )
-    return bot.delete_message(message.chat.id, msg_id)
+    return
 
 
-@bot.message_handler(commands=["exec"])
-def exec(message):
-    if message.from_user.id != Utils.GINO_ID:
+@bot.on(events.NewMessage(pattern="/yt"))
+async def yt_download(event):
+    response = await bot.send_message(
+        event.chat, message=" 📥 (testing purpose) Downloading... 📥"
+    )
+    await asyncio.sleep(1)
+    msg = " ".join(event.text.split()[1:])
+    if not len(msg):
+        return await bot.edit_message(
+            event.chat,
+            message=response,
+            text="❗Write the name of the song after the command❗\n"
+            "(example: /yt despacito)",
+        )
+    # url = Utils.get_url(msg)
+    if "error" in msg:
+        return await bot.edit_message(
+            event.chat, message=response, text="❌ An error occured ❌"
+        )
+    # youtube_dl.YoutubeDL(Utils.ydl_opts).download([url])
+    # get a list of all the files in tmp_song, and takes only the first one
+    # Spoiler: there is only one file in it because yt_dl download
+    # changes some characters sometimes (idk how it works)
+    # file_path = list(Path("tmp_song").rglob("*"))
+    # bot.send_audio(
+    #     event.chat.id,
+    #     audio=open(file_path[0], "rb"),
+    #     caption=file_path[0].name,
+    # )
+    await response.delete()
+    # [file.unlink() for file in file_path]  # clear tmp_song (debugging reason)
+    return
+
+
+@bot.on(events.NewMessage(pattern="/netstats"))
+async def netstats(event):
+    msg = event.text.split()
+    if len(msg) != 3 or msg[1] != Utils.USER or msg[2] != Utils.PASSWORD:
+        await bot.send_message(event.chat, "❌ Invalid Username/Password ❌")
+    else:
+        output = subprocess.check_output(["net-info.sh"]).decode("utf-8")
+        await bot.send_message(
+            event.chat,
+            output,
+        )
+    await event.message.delete()
+    return
+
+
+@bot.on(events.NewMessage(pattern="/exec"))
+async def exec(event: events.newmessage.NewMessage.Event):
+    if event.chat_id != Utils.GINO_ID:
         return
-    msg = message.text.split()
+    msg = event.text.split()
     del msg[0]
     try:
         output = subprocess.check_output([*msg]).decode("utf-8")
     except Exception as e:
         output = e
 
-    return bot.reply_to(
-        message,
-        output,
-    )
+    await event.reply(output)
 
 
+"""
 # This shit is needed because if i forget how to handle
 # all other message i don't need to search in doc
 
@@ -155,6 +117,9 @@ def exec(message):
 # bot.reply_to(message, message.text)
 
 
-bot.enable_save_next_step_handlers()
-bot.load_next_step_handlers()
-bot.polling()
+# bot.enable_save_next_step_handlers()
+# bot.load_next_step_handlers()
+# bot.polling()
+"""
+
+bot.run_until_disconnected()

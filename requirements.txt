@@ -1,3 +1,4 @@
-pyTelegramBotAPI==3.8.1
+Telethon==1.23.0
 python-dotenv==0.18.0
-youtube-dl==2021.6.6
+yt-dlp==2021.11.10.1
+hachoir==3.1.2

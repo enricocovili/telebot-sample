@@ -1,7 +1,8 @@
 import os
 from dotenv import load_dotenv
 from pathlib import Path
-import youtube_dl
+import yt_dlp
+import re
 
 load_dotenv()
 
@@ -19,29 +20,19 @@ class Utils:
 
     ydl_opts = {
         "format": "bestaudio",
-        "logtostderr": False,
-        "quiet": True,
-        "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
+        "logtostderr": True,
+        "quiet": False,
         "outtmpl": str(out_tmpl_ytdl),
         "nooverwrites": False,
     }
 
     def get_url(msg):
-        try:
-            video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
-                msg, download=False
-            )
-            url = msg
-        except youtube_dl.utils.DownloadError:
-            # print(e)
-            msg = "ytsearch:" + msg
-            try:
-                video_info = youtube_dl.YoutubeDL(Utils.ydl_opts).extract_info(
-                    msg, download=False
-                )
-            except youtube_dl.utils.DownloadError:
-                return 1
-            url = video_info.get("entries")[0].get("webpage_url")
-        except Exception:
-            return 1
-        return url
+        yt_re = re.compile(
+            r"/(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/).+/gmi"
+        )
+        if yt_re.match(msg):
+            return msg
+        msg = f"ytsearch:{msg}"
+        with yt_dlp.YoutubeDL(Utils.ydl_opts) as ydl:
+            url = ydl.extract_info(msg, download=False)
+        return url["entries"][0]["webpage_url"]

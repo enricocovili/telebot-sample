@@ -26,6 +26,9 @@ class Utils:
         "nooverwrites": False,
     }
 
+    def pattern_constructor(patterns: list):
+        return r"".join(f"(/{pattern})|" for pattern in patterns)[:-1]
+
     def get_url(msg):
         yt_re = re.compile(
             r"/(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/).+/gmi"

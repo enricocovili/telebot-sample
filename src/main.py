@@ -6,12 +6,42 @@ import subprocess
 
 # event: events.newmessage.NewMessage.Event
 
+status_commands = [
+    # ["uname", "-a"],
+    {"🕐 uptime": ["uptime", "-p"]},
+    {"📊 load": ["cat", "/proc/loadavg"]},
+    # {"📊 mem": ["cat", "/proc/meminfo"]},
+    {"🌡️ temp": ["cat", "/sys/class/thermal/thermal_zone0/temp"]},
+    # ["df", "-h"],
+    # ["pihole", "status"],
+    {"tgram_bot": ["systemctl", "is-active", "telegram_bot_py"]},
+    {"lavalink_server": ["systemctl", "is-active", "lavalink_server"]},
+    {"discord_bot": ["systemctl", "is-active", "discord_bot_py"]},
+]
 
 bot = TelegramClient(
     "bot",
     api_id=Utils.APP_ID,
     api_hash=Utils.APP_HASH,
 ).start(bot_token=Utils.TOKEN)
+
+
+async def _exec(event, cmd, name=""):
+    if not cmd:
+        return "No command specified"
+    if event.chat_id != Utils.GINO_ID:
+        return "❌ You are not allowed to use this command ❌"
+    try:
+        output = subprocess.run(
+            [*cmd],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+    except FileNotFoundError as e:
+        return f"❌ {e}"
+    out = output.stdout if output.stdout else output.stderr
+    return name + ": " + out if name else out
 
 
 @bot.on(events.NewMessage(pattern=Utils.pattern_constructor(["help", "start"])))
@@ -72,35 +102,21 @@ async def yt_download(event):
     return
 
 
-# @bot.on(events.NewMessage(pattern="/netstats"))
-# async def netstats(event):
-#     msg = event.text.split()
-#     if len(msg) != 3 or msg[1] != Utils.USER or msg[2] != Utils.PASSWORD:
-#         await bot.send_message(event.chat, "❌ Invalid Username/Password ❌")
-#     else:
-#         output = subprocess.check_output(["net-info.sh"]).decode("utf-8")
-#         await bot.send_message(
-#             event.chat,
-#             output,
-#         )
-#     await event.message.delete()
-#     return
-
-
 @bot.on(events.NewMessage(pattern="/exec"))
 async def exec(event: events.newmessage.NewMessage.Event):
-    if event.chat_id != Utils.GINO_ID:
-        return await event.reply("❌ You are not allowed to use this command ❌")
-    msg = event.text.split()
-    del msg[0]
-    output = subprocess.run(
-        [*msg],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
+    msg = event.text.split()[1:]
+    await event.reply(
+        await _exec(event, cmd=msg),
     )
-    out = output.stdout if output.stdout else output.stderr
-    return await event.reply(out)
+
+
+@bot.on(events.NewMessage(pattern="/pistatus"))
+async def pistatus(event: events.newmessage.NewMessage.Event):
+    output = ""
+    for i in status_commands:
+        for key, value in i.items():
+            output += await _exec(event, cmd=value, name=key)
+    await event.reply(output)
 
 
 """

@@ -1,9 +1,9 @@
-from telethon import TelegramClient, events, Button
-import yt_dlp
-from pathlib import Path
+from telethon import events, Button
 from utils import Utils
 import subprocess
+import handlers.client, handlers.yt_dwnld
 
+bot = handlers.client.bot
 # event: events.newmessage.NewMessage.Event
 
 status_commands = [
@@ -18,12 +18,6 @@ status_commands = [
     {"lavalink_server": ["systemctl", "is-active", "lavalink_server"]},
     {"discord_bot": ["systemctl", "is-active", "discord_bot_py"]},
 ]
-
-bot = TelegramClient(
-    "bot",
-    api_id=Utils.APP_ID,
-    api_hash=Utils.APP_HASH,
-).start(bot_token=Utils.TOKEN)
 
 
 async def _exec(event, cmd, name=""):
@@ -42,6 +36,10 @@ async def _exec(event, cmd, name=""):
         return f"❌ {e}"
     out = output.stdout if output.stdout else output.stderr
     return name + ": " + out if name else out
+
+
+with bot as client:
+    client.add_event_handler(handlers.yt_dwnld.yt_download)
 
 
 @bot.on(events.NewMessage(pattern=Utils.pattern_constructor(["help", "start"])))
@@ -69,45 +67,11 @@ async def pornhub(event):
     return
 
 
-@bot.on(events.NewMessage(pattern="/yt"))
-async def yt_download(event):
-    response = await bot.send_message(
-        event.chat, message=" 📥 (testing purpose) Downloading... 📥"
-    )
-    msg = " ".join(event.text.split()[1:])
-    if not len(msg):
-        return await bot.edit_message(
-            event.chat,
-            message=response,
-            text="❗Write the name of the song after the command❗\n"
-            "(example: /yt despacito)",
-        )
-    url = Utils.get_url(msg)
-    if "error" in msg:
-        return await bot.edit_message(
-            event.chat, message=response, text=f"{url}\n❌ An error occured ❌"
-        )
-    yt_dlp.YoutubeDL(Utils.ydl_opts).download([url])
-    # get a list of all the files in tmp_song, and takes only the first one
-    # Spoiler: there is only one file in it because yt_dl download
-    # changes some characters sometimes (idk how it works)
-    file_path = list(Path("tmp_song").rglob("*"))
-    await bot.send_message(
-        event.chat,
-        file=file_path[0],
-        buttons=bot.build_reply_markup(Button.url("🔗 YT link 🔗", url=url)),
-    )
-    await response.delete()
-    [file.unlink() for file in file_path]  # clear ./tmp_song (debug reason)
-    return
-
-
 @bot.on(events.NewMessage(pattern="/exec"))
 async def exec(event: events.newmessage.NewMessage.Event):
     msg = event.text.split()[1:]
-    await event.reply(
-        await _exec(event, cmd=msg),
-    )
+    out = await _exec(event, cmd=msg)
+    await event.reply(out[:4000])
 
 
 @bot.on(events.NewMessage(pattern="/pistatus"))
@@ -115,8 +79,42 @@ async def pistatus(event: events.newmessage.NewMessage.Event):
     output = ""
     for i in status_commands:
         for key, value in i.items():
-            output += await _exec(event, cmd=value, name=key)
-    await event.reply(output)
+            if key == "🌡️ temp":
+                # also with "🌡️ temp" part
+                full_temp = await _exec(event, cmd=value, name=key)
+                # only number
+                reducedtemp = full_temp.split()[-1]
+                reducedtemp = f"{reducedtemp[:2]}.{reducedtemp[2:-1]}°C\n"
+                full_temp = f"{' '.join(full_temp.split()[:-1])} {reducedtemp}"
+                output += full_temp
+            else:
+                output += await _exec(event, cmd=value, name=key)
+    await event.reply(output[:4000])
+
+
+@bot.on(events.CallbackQuery)
+async def callback(event):
+    # print(event.data)
+    if event.data == b"reload_usb":
+        await _exec(event, ["sudo", "mount", "-a"])
+    elif event.data == b"general_status":
+        await pistatus(event)
+
+
+@bot.on(events.NewMessage(pattern="/menu"))
+async def menu(event: events.newmessage.NewMessage):
+    # chat = await event.get_chat()
+    sender = await event.get_sender()
+    await bot.send_message(
+        sender,
+        message="Select one of the options below:",
+        buttons=[
+            [
+                Button.inline("reload_usb", data=b"reload_usb"),
+                Button.inline("general_status", data=b"general_status"),
+            ],
+        ],
+    )
 
 
 """
@@ -129,4 +127,5 @@ async def pistatus(event: events.newmessage.NewMessage.Event):
 
 """
 
+bot.start(bot_token=Utils.TOKEN)
 bot.run_until_disconnected()

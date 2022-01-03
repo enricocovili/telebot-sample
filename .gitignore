@@ -142,3 +142,4 @@ tmp_song/*
 .handler-saves
 *.session
 *.session-journal
+*.json

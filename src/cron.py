@@ -4,6 +4,8 @@ from utils import Utils
 import asyncio
 import re
 
+temp_limit = 51.00
+
 
 async def journal_log():
     bot = TelegramClient("cron", api_id=Utils.APP_ID, api_hash=Utils.APP_HASH)
@@ -21,7 +23,7 @@ async def journal_log():
     temp = await Utils._exec(gino_id, cmd=cmd, name="🌡️ temp")
     temp = Utils.get_temperature(temp)
     temp = re.search(r"[0-9]+\.[0-9]+", temp).group(0)
-    if float(temp) >= 50.00:
+    if float(temp) >= temp_limit:
         await bot.send_message(gino, f"CPU TEMPERATURE WARNING: {temp}°C")
 
 

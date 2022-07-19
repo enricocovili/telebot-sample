@@ -24,7 +24,7 @@ async def journal_log():
     temp = re.search(r"[0-9]+\.[0-9]+", temp).group(0)
     if float(temp) >= temp_limit:
         top_output = subprocess.check_output(["top", "-b", "-n", "1"]).decode("utf-8").split("\n")
-        top_output = top_output[1:16]
+        top_output = top_output[1:16].join("\n")
         await bot.send_message(gino, f"CPU TEMPERATURE WARNING: {temp}°C\nMore info:\n{top_output}")
 
 

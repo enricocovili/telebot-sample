@@ -1,8 +1,7 @@
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 from utils import Utils
-import asyncio
-import re
+import asyncio, subprocess, re
 
 temp_limit = 51.00
 
@@ -24,7 +23,9 @@ async def journal_log():
     temp = Utils.get_temperature(temp)
     temp = re.search(r"[0-9]+\.[0-9]+", temp).group(0)
     if float(temp) >= temp_limit:
-        await bot.send_message(gino, f"CPU TEMPERATURE WARNING: {temp}°C")
+        top_output = subprocess.check_output(["top", "-b", "-n", "1"]).decode("utf-8").split("\n")
+        top_output = top_output[1:16]
+        await bot.send_message(gino, f"CPU TEMPERATURE WARNING: {temp}°C\nMore info:\n{top_output}")
 
 
 asyncio.run(journal_log())

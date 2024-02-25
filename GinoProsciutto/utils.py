@@ -23,7 +23,8 @@ class Utils:
     ydl_opts = {
         "format": "bestaudio",
         "logtostderr": True,
-        "quiet": False,
+        "quiet": True,
+        "external_downloader_args": ['-loglevel', 'panic'],
         "outtmpl": str(out_tmpl_ytdl),
         "nooverwrites": False,
     }
@@ -45,6 +46,7 @@ class Utils:
         return r"".join(f"(/{pattern})|" for pattern in patterns)[:-1]
 
     def get_url(msg):
+        msg = msg.split("?")[0]
         yt_re = re.compile(
             r"/(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/).+/gmi"
         )

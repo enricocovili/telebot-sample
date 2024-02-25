@@ -1,5 +1,6 @@
 from telethon import events, Button
 from utils import Utils
+import logging
 
 
 @events.register(events.NewMessage(pattern="/pistatus"))
@@ -7,6 +8,7 @@ async def pistatus(event: events.newmessage.NewMessage.Event):
     bot = event.client
     chat_id = event.chat.id
     output = ""
+    logging.info("received: pistatus")
     for i in Utils.status_commands:
         for key, value in i.items():
             if key == "🌡️ temp":
@@ -23,6 +25,7 @@ async def callback(event):
     if event.data == b"reload_usb":
         output = await Utils._exec(event.chat.id, ["sudo", "mount", "-a"])
         if output == "":
+            logging.info("reloaded usb devices")
             return await event.answer("USB DEVICES RELOADED")
         bot = event.client
         return await bot.send_message(event.chat, message=output[:4000])

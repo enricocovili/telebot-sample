@@ -2,13 +2,14 @@ from telethon import events, Button
 import yt_dlp
 from utils import Utils
 from pathlib import Path
+import logging
 
 
 @events.register(events.NewMessage(pattern="/yt"))
 async def yt_download(event):
     bot = event.client
     response = await bot.send_message(
-        event.chat, message=" 📥 (testing purpose) Downloading... 📥"
+        event.chat, message=" 📥 Downloading... 📥"
     )
     msg = " ".join(event.text.split()[1:])
     if not len(msg):
@@ -19,6 +20,7 @@ async def yt_download(event):
             "(example: /yt despacito)",
         )
     url = Utils.get_url(msg)
+    logging.info("received: yt-download " + url)
     if "error" in msg:
         return await bot.edit_message(
             event.chat, message=response, text=f"{url}\n❌ An error occured ❌"

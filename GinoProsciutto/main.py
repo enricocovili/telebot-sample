@@ -1,9 +1,18 @@
 from telethon import events
 from utils import Utils
 from handlers import *
+import logging
+
+# setup logging to file
+logging.basicConfig(
+    # filename="logs/bot.log",
+    # filemode="a+",
+    format="%(asctime)s:%(levelname)s:%(name)s -> %(message)s",
+    datefmt="%d-%m-%Y %H:%M:%S",
+    level=logging.INFO,
+)
 
 bot = client.bot
-
 
 @bot.on(events.NewMessage(pattern=Utils.pattern_constructor(["help", "start"])))
 async def send_author(event):
@@ -15,16 +24,6 @@ async def send_author(event):
 @bot.on(events.NewMessage(pattern="/shaggy"))
 async def shaggy(event):
     await bot.send_file(event.chat, "./shaggy.jpeg", caption="Shaggy")
-
-
-@bot.on(events.NewMessage(pattern="/pornhub"))
-async def pornhub(event):
-    handeld_message = event.text[9:]
-    await bot.send_message(
-        event.chat,
-        "https://www.pornhub.com/video/search?search="
-        + handeld_message.replace(" ", "+"),
-    )
 
 
 bot.add_event_handler(yt_dwnld.yt_download)

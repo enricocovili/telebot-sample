@@ -14,6 +14,7 @@ logging.basicConfig(
 
 bot = client.bot
 
+
 @bot.on(events.NewMessage(pattern=Utils.pattern_constructor(["help", "start"])))
 async def send_author(event):
     await event.reply(
@@ -26,16 +27,22 @@ async def shaggy(event):
     await bot.send_file(event.chat, "./shaggy.jpeg", caption="Shaggy")
 
 
-bot.add_event_handler(yt_dwnld.yt_download)
-bot.add_event_handler(exec.exec)
-bot.add_event_handler(menu.callback)
-bot.add_event_handler(menu.menu)
-bot.add_event_handler(menu.pistatus)
-bot.add_event_handler(film.film)
-
-print(f"{'-'*30}\ncommands loaded, bot online\n{'-'*30}")
-
 if __name__ == "__main__":
+    # clear tmp_song
+    [file.unlink() for file in Utils.out_tmpl_ytdl.parent.glob("*")]
+
+    logging.info("tmp_song cleared")
+
+    bot.add_event_handler(yt_dwnld.yt_download)
+    bot.add_event_handler(yt_dwnld.callback)
+    bot.add_event_handler(exec.exec)
+    bot.add_event_handler(menu.callback)
+    bot.add_event_handler(menu.menu)
+    bot.add_event_handler(menu.pistatus)
+    bot.add_event_handler(film.film)
+
+    logging.info(f"commands loaded")
+
     bot.start(bot_token=Utils.TOKEN)
     # load_commands(bot)
     bot.run_until_disconnected()

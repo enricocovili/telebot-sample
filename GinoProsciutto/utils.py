@@ -9,7 +9,6 @@ load_dotenv()
 
 
 class Utils:
-
     with open("config.json", "r") as f:
         config = json.load(f)
 
@@ -18,13 +17,12 @@ class Utils:
     APP_HASH = config.get("APP_HASH")
     WHITELIST_IDS = config.get("WHITELIST_IDS")
 
-    out_tmpl_ytdl = Path("tmp_song/%(title)s.mp3")
+    out_tmpl_ytdl = Path("tmp_song/%(title)s")
 
     ydl_opts = {
-        "format": "bestaudio",
         "logtostderr": True,
         "quiet": True,
-        "external_downloader_args": ['-loglevel', 'panic'],
+        "external_downloader_args": ["-loglevel", "panic"],
         "outtmpl": str(out_tmpl_ytdl),
         "nooverwrites": False,
     }
@@ -46,9 +44,8 @@ class Utils:
         return r"".join(f"(/{pattern})|" for pattern in patterns)[:-1]
 
     def get_url(msg):
-        msg = msg.split("?")[0]
         yt_re = re.compile(
-            r"/(?:https?:\/\/)?(?:www\.)?youtu\.?be(?:\.com)?\/?.*(?:watch|embed)?(?:.*v=|v\/|\/).+/gmi"
+            r"^(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/"
         )
         if yt_re.match(msg):
             return msg

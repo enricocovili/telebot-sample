@@ -35,11 +35,11 @@ if __name__ == "__main__":
 
     bot.add_event_handler(yt_dwnld.yt_download)
     bot.add_event_handler(yt_dwnld.callback)
-    bot.add_event_handler(exec.exec)
     bot.add_event_handler(menu.callback)
     bot.add_event_handler(menu.menu)
     bot.add_event_handler(menu.pistatus)
-    bot.add_event_handler(film.film)
+    bot.add_event_handler(others.exec)
+    bot.add_event_handler(others.classifica_artiglio)
 
     logging.info(f"commands loaded")
 

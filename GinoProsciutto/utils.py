@@ -16,6 +16,7 @@ class Utils:
     APP_ID = config.get("APP_ID")
     APP_HASH = config.get("APP_HASH")
     WHITELIST_IDS = config.get("WHITELIST_IDS")
+    artiglio_ranking_url = config.get("volley_ranking_url")
 
     out_tmpl_ytdl = Path("tmp_song/%(title)s")
 

@@ -18,12 +18,33 @@ async def classifica_artiglio(event: events.newmessage.NewMessage.Event):
     soup = bs4.BeautifulSoup(res.text, "html.parser")
     table = soup.select("table")[0]
     rows = table.select("tr")
-    classifica = []
-    for row in rows[1:]:
-        cells = row.select("td")
-        classifica.append([cell.text.strip() for cell in cells])
-    out = "```"
-    for pos, team in enumerate(classifica):
-        out += f"{pos+1}. {team[1]} - {team[2]} - {team[3]}\n"
-    out += "```"
-    await event.reply(out[:4000])
+    # send a nice formatted message using html. the row with "artiglio" is bold
+    headers = ["Rank", "Nome", "Punti", "Giocate"]
+    # get longest string for each column
+    max_len = [len(header) for header in headers] # placeholders
+    out = "<pre>"
+    for row in rows:
+        cols = row.select("td")
+        if len(cols) == 0:
+            continue
+        cols = cols[0:4]
+        for i, col in enumerate(cols):
+            if len(col.getText()) > max_len[i]:
+                max_len[i] = len(col.getText())
+    out += "⎡" + "|".join(["⎻"*max_l for max_l in max_len]) + "⎤\n"
+    out += "|" + "|".join(header.ljust(max_len[i]) for i, header in enumerate(headers)) + "|\n"
+    out += "⎢" + "|".join(["⎻"*max_l for max_l in max_len]) + "⎥\n"
+    for row in rows:
+        cols = row.select("td")
+        if len(cols) == 0:
+            continue
+        cols = cols[0:4]
+        if "artiglio" in cols[1].getText().lower():
+            out += "<b>"
+        out += "|" + "|".join(col.getText().ljust(max_len[i]) for i, col in enumerate(cols)) + "|\n"
+        if "artiglio" in cols[1].getText().lower():
+            out += "</b>"
+    out += "⎣" + "|".join(["⎻"*max_l for max_l in max_len]) + "⎦\n"
+    out += "</pre>"
+    await event.reply(out[:4000], parse_mode="html")
+    # await event.reply(out[:4000], parse_mode="html")

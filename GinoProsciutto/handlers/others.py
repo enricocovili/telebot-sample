@@ -31,9 +31,9 @@ async def classifica_artiglio(event: events.newmessage.NewMessage.Event):
         for i, col in enumerate(cols):
             if len(col.getText()) > max_len[i]:
                 max_len[i] = len(col.getText())
-    out += "⎡" + "|".join(["⎻"*max_l for max_l in max_len]) + "⎤\n"
-    out += "|" + "|".join(header.ljust(max_len[i]) for i, header in enumerate(headers)) + "|\n"
-    out += "⎢" + "|".join(["⎻"*max_l for max_l in max_len]) + "⎥\n"
+    out += "⎡" + "|".join(["⎺"*max_l for max_l in max_len]) + "⎤\n"
+    out += "⎢" + "|".join(header.ljust(max_len[i]) for i, header in enumerate(headers)) + "|\n"
+    out += "⎢" + "|".join(["-"*max_l for max_l in max_len]) + "⎥\n"
     for row in rows:
         cols = row.select("td")
         if len(cols) == 0:
@@ -41,10 +41,10 @@ async def classifica_artiglio(event: events.newmessage.NewMessage.Event):
         cols = cols[0:4]
         if "artiglio" in cols[1].getText().lower():
             out += "<b>"
-        out += "|" + "|".join(col.getText().ljust(max_len[i]) for i, col in enumerate(cols)) + "|\n"
+        out += "⎢" + "|".join(col.getText().ljust(max_len[i]) for i, col in enumerate(cols)) + "|\n"
         if "artiglio" in cols[1].getText().lower():
             out += "</b>"
-    out += "⎣" + "|".join(["⎻"*max_l for max_l in max_len]) + "⎦\n"
+    out += "⎣" + "|".join(["_"*max_l for max_l in max_len]) + "⎦\n"
     out += "</pre>"
     await event.reply(out[:4000], parse_mode="html")
     # await event.reply(out[:4000], parse_mode="html")

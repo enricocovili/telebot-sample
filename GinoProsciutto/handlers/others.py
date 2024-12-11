@@ -12,6 +12,7 @@ async def exec(event: events.newmessage.NewMessage.Event):
 
 @events.register(events.NewMessage(pattern="/classifica_artiglio"))
 async def classifica_artiglio(event: events.newmessage.NewMessage.Event):
+    # LEGACY / DEPRECATED
     logging.info("received: classifica_artiglio")
     res = requests.get(Utils.artiglio_ranking_url)
     res.raise_for_status()
@@ -48,3 +49,61 @@ async def classifica_artiglio(event: events.newmessage.NewMessage.Event):
     out += "</pre>"
     await event.reply(out[:4000], parse_mode="html")
     # await event.reply(out[:4000], parse_mode="html")
+
+@events.register(events.NewMessage(pattern="/artiglio"))
+async def artiglio(event: events.newmessage.NewMessage.Event):
+    logging.info("received: artiglio")
+    res = requests.get(Utils.artiglio_ranking_url)
+    res.raise_for_status()
+    soup = bs4.BeautifulSoup(res.text, "html.parser")
+    ranking = soup.select("table")[0]
+    matches = soup.select("table")[1]
+    for row in ranking.select("tr"):
+        cols = row.select("td")
+        if len(cols) == 0:
+            continue
+        if "artiglio" in cols[1].getText().lower():
+            b_rank = cols[0].getText()
+            b_points = cols[2].getText()
+    last_match = ""
+    # iterate over tr that have class "dispari" or "pari"
+    for match in matches.select("tr"):
+        if not "dispari" in match.get("class", []) and not "pari" in match.get("class", []):
+            continue
+        cols = match.select("td")
+        if len(cols) == 0:
+            continue
+        week_day = cols[3].getText()
+        date = cols[2].getText()
+        if "artiglio" in cols[6].getText().lower():
+            opponent = cols[5].getText()
+            casa = False
+        else:
+            opponent = cols[6].getText()
+            casa = True
+        # check if (result) is empty
+        if cols[8].getText() == "":
+            next_match = {"date": week_day + " " + date, "opponent": opponent, "casa": casa}
+            break
+        else:
+            last_match = {"date": week_day + " " + date, "opponent": opponent, "result": cols[8].next.getText(), "casa": casa}
+        
+    output = f"""
+        Informazioni su **Artiglio**:
+        ⬤ **Rank Girone B**: {b_rank}
+        ⬤ **Rank Girone A**: {b_rank} TODO: fix
+        ⬤ **Punti**: {b_points}
+        ⬤ **Prossima partita**: 
+            {next_match["date"]}
+            vs {next_match["opponent"]} 
+            ({'casa' if next_match["casa"] else 'ospiti'})
+        ⬤ **Ultima partita**: 
+            {last_match["date"]} 
+            vs {last_match["opponent"]} 
+            ({last_match["result"]}) ({'casa' if last_match["casa"] else 'ospiti'})
+    """
+    # strip trailing whitespaces for every line if start with "⬤"
+    output = "\n".join([line.strip() if line.strip().startswith("⬤") else line for line in output.split("\n")])
+    # also cap every line starting with whitespaces to a max of 4 trailing whitespaces
+    output = "\n".join([4*" " + line.strip() if line.startswith(" ") else line for line in output.split("\n")])
+    await event.reply(output)

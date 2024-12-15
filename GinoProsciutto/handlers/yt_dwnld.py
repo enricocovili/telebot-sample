@@ -26,6 +26,8 @@ async def download_and_clean(url: str, event: events.newmessage.NewMessage):
 
 @events.register(events.CallbackQuery)
 async def callback(event):
+    if not event.data.startswith(b"yt_download__"):
+        return
     format = event.data.split(b"|")[0].decode("utf-8")
     url = event.data.split(b"|")[1].decode("utf-8")
     logging.info(f"received: yt-download {format} {url}")
@@ -83,8 +85,8 @@ async def yt_download(event):
         text=f"Song found:\n🎵 {title} 🎵\nby 🎤 {author} 🎤",
         buttons=[
             [
-                Button.inline("🔊 Audio 🔊", data=f"yt_audio|{url}"),
-                Button.inline("🎥 Video 🎥", data=f"yt_video|{url}"),
+                Button.inline("🔊 Audio 🔊", data=f"yt_download__audio|{url}"),
+                Button.inline("🎥 Video 🎥", data=f"yt_download__video|{url}"),
             ]
         ],
     )

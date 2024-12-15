@@ -2,6 +2,12 @@ from telethon import events, Button
 from utils import Utils
 import logging
 
+@events.register(events.NewMessage(pattern="/exec"))
+async def exec(event: events.newmessage.NewMessage.Event):
+    msg = event.text.split()[1:]
+    logging.info("received: exec " + " ".join(msg))
+    out = await Utils._exec(event.chat_id, cmd=msg)
+    await event.reply(out[:4000])
 
 @events.register(events.NewMessage(pattern="/pistatus"))
 async def pistatus(event: events.newmessage.NewMessage.Event):
@@ -22,17 +28,19 @@ async def pistatus(event: events.newmessage.NewMessage.Event):
 
 @events.register(events.CallbackQuery)
 async def callback(event):
-    if event.data == b"reload_usb":
+    if not event.data.startswith(b"menu__"):
+        return
+    if event.data == b"menu__reload_usb":
         output = await Utils._exec(event.chat.id, ["sudo", "mount", "-a"])
         if output == "":
             logging.info("reloaded usb devices")
             return await event.answer("USB DEVICES RELOADED")
         bot = event.client
         return await bot.send_message(event.chat, message=output[:4000])
-    if event.data == b"general_status":
+    if event.data == b"menu__general_status":
         await pistatus(event)
         return await event.answer()
-    if event.data == b"close_menu":
+    if event.data == b"menu__close_menu":
         return await event.delete()
 
 
@@ -45,11 +53,11 @@ async def menu(event: events.newmessage.NewMessage):
         message="Select one of the options below:",
         buttons=[
             [
-                Button.inline("🔃 Reload USB devices 🔃", data=b"reload_usb"),
+                Button.inline("🔃 Reload USB devices 🔃", data=b"menu__reload_usb"),
                 Button.inline(
-                    "🔍 Info about RasPi status 🔍", data=b"general_status"
+                    "🔍 Info about RasPi status 🔍", data=b"menu__general_status"
                 ),
             ],
-            [Button.inline("❌ Close Menu ❌", data=b"close_menu")],
+            [Button.inline("❌ Close Menu ❌", data=b"menu__close_menu")],
         ],
     )

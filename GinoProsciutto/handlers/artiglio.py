@@ -1,5 +1,5 @@
 from utils import Utils
-from telethon import events
+from telethon import events, Button
 import logging
 import requests, bs4
 
@@ -125,56 +125,32 @@ def get_matches():
         matches[-1].result = matches[-1].result[0:5]
     return matches
 
-@events.register(events.NewMessage(pattern="/exec"))
-async def exec(event: events.newmessage.NewMessage.Event):
-    msg = event.text.split()[1:]
-    logging.info("received: exec " + " ".join(msg))
-    out = await Utils._exec(event.chat_id, cmd=msg)
-    await event.reply(out[:4000])
-
-@events.register(events.NewMessage(pattern="/classifica_artiglio"))
-async def classifica_artiglio(event: events.newmessage.NewMessage.Event):
-    # LEGACY / DEPRECATED
-    logging.info("received: classifica_artiglio")
-    res = requests.get(Utils.artiglio_ranking_url)
-    res.raise_for_status()
-    soup = bs4.BeautifulSoup(res.text, "html.parser")
-    table = soup.select("table")[0]
-    rows = table.select("tr")
+def ranking(event: events.newmessage.NewMessage.Event, local: bool):
+    logging.info("received: ranking")
+    teams = get_full_ranks()
+    if local == True:
+        # get only the teams in the same round as artiglio
+        artiglio_round = [team for team in teams if "artiglio" in team.name.lower()][0].round
+        teams = [team for team in teams if team.round == artiglio_round]
     # send a nice formatted message using html. the row with "artiglio" is bold
     headers = ["Rank", "Nome", "Punti", "Giocate"]
     # get longest string for each column
     max_len = [len(header) for header in headers] # placeholders
     out = "<pre>"
-    for row in rows:
-        cols = row.select("td")
-        if len(cols) == 0:
-            continue
-        cols = cols[0:4]
-        for i, col in enumerate(cols):
-            if len(col.getText()) > max_len[i]:
-                max_len[i] = len(col.getText())
-    out += "⎡" + "|".join(["⎺"*max_l for max_l in max_len]) + "⎤\n"
+    for team in teams:
+        for i, col in enumerate([team.local_rank if local == True else team.global_rank, team.name, team.points, team.played]):
+            max_len[i] = max(max_len[i], len(str(col)))
+    # out += "⎡" + "|".join(["⎺"*max_l for max_l in max_len]) + "⎤\n" # idk but broken on mobile
     out += "⎢" + "|".join(header.ljust(max_len[i]) for i, header in enumerate(headers)) + "|\n"
     out += "⎢" + "|".join(["-"*max_l for max_l in max_len]) + "⎥\n"
-    for row in rows:
-        cols = row.select("td")
-        if len(cols) == 0:
-            continue
-        cols = cols[0:4]
-        if "artiglio" in cols[1].getText().lower():
-            out += "<b>"
-        out += "⎢" + "|".join(col.getText().ljust(max_len[i]) for i, col in enumerate(cols)) + "|\n"
-        if "artiglio" in cols[1].getText().lower():
-            out += "</b>"
+    for team in teams:
+        cols = [team.local_rank if local == True else team.global_rank, team.name, team.points, team.played]
+        out += "⎢" + "|".join(str(col).ljust(max_len[i]) for i, col in enumerate(cols)) + "|\n"
     out += "⎣" + "|".join(["_"*max_l for max_l in max_len]) + "⎦\n"
     out += "</pre>"
-    await event.reply(out[:4000], parse_mode="html")
-    # await event.reply(out[:4000], parse_mode="html")
+    return out
 
-@events.register(events.NewMessage(pattern="/artiglio"))
-async def artiglio(event: events.newmessage.NewMessage.Event):
-    logging.info("received: artiglio")
+def artiglio_stats(event: events.newmessage.NewMessage.Event):
     teams = get_full_ranks()
     matches = get_matches()
     
@@ -210,4 +186,40 @@ async def artiglio(event: events.newmessage.NewMessage.Event):
     output = "\n".join([line.strip() if line.strip().startswith("⬤") else line for line in output.split("\n")])
     # also cap every line starting with whitespaces to a max of 4 trailing whitespaces
     output = "\n".join([4*" " + line.strip() if line.startswith(" ") else line for line in output.split("\n")])
-    await event.reply(output)
+    return output
+
+@events.register(events.CallbackQuery)
+async def callback(event):
+    if not event.data.startswith(b"artiglio__"):
+        return
+    output = ""
+    html_parse = False
+    if event.data == b"artiglio__local_rank":
+        output = ranking(event, local=True)
+        html_parse = True
+    elif event.data == b"artiglio__global_rank":
+        output = ranking(event, local=False)
+        html_parse = True
+    elif event.data == b"artiglio__stats":
+        output = artiglio_stats(event)
+    elif event.data == b"artiglio__close_menu":
+        return await event.delete()
+    return await event.client.send_message(event.chat, output[:4000], parse_mode="html" if html_parse else "md")
+
+@events.register(events.NewMessage(pattern="/artiglio"))
+async def artiglio(event: events.newmessage.NewMessage):
+    # chat = await event.get_chat()
+    bot = event.client
+    await bot.send_message(
+        event.chat,
+        message="Select one of the options below",
+        buttons=[
+            [
+                Button.inline("🥇 Local Rank", data=b"artiglio__local_rank"),
+                Button.inline("🥇 Global Rank", data=b"artiglio__global_rank"),
+            ],
+            [Button.inline("📊 Stats", data=b"artiglio__stats")],
+            [Button.url("🔗 FIPAV Page 🔗", url=Utils.artiglio_ranking_url)],
+            [Button.inline("❌ Close Menu ❌", data=b"artiglio__close_menu")],
+        ],
+    )

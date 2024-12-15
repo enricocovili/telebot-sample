@@ -31,7 +31,7 @@ async def callback(event):
     format = event.data.split(b"|")[0].decode("utf-8")
     url = event.data.split(b"|")[1].decode("utf-8")
     logging.info(f"received: yt-download {format} {url}")
-    if format == "yt_audio":
+    if "audio" in format:
         Utils.ydl_opts["format"] = "bestaudio"
         Utils.ydl_opts["postprocessors"] = [
             {
@@ -41,7 +41,7 @@ async def callback(event):
             }
         ]
         await event.answer("Downloading audio...")
-    elif format == "yt_video":
+    elif "video" in format:
         Utils.ydl_opts["postprocessors"] = []
         # best video up to 480p, best audio
         Utils.ydl_opts["format"] = "bv*[height<=480]+ba/b[height<=480] / wv*+ba/w"

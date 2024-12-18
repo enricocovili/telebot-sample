@@ -141,11 +141,11 @@ def ranking(event: events.newmessage.NewMessage.Event, local: bool):
         for i, col in enumerate([team.local_rank if local == True else team.global_rank, team.name, team.points, team.played]):
             max_len[i] = max(max_len[i], len(str(col)))
     # out += "⎡" + "|".join(["⎺"*max_l for max_l in max_len]) + "⎤\n" # idk but broken on mobile
-    out += "⎢" + "|".join(header.ljust(max_len[i]) for i, header in enumerate(headers)) + "|\n"
+    out += "⎢" + "|".join(header.ljust(max_len[i]) for i, header in enumerate(headers)) + "⎥\n"
     out += "⎢" + "|".join(["-"*max_l for max_l in max_len]) + "⎥\n"
     for team in teams:
         cols = [team.local_rank if local == True else team.global_rank, team.name, team.points, team.played]
-        out += "⎢" + "|".join(str(col).ljust(max_len[i]) for i, col in enumerate(cols)) + "|\n"
+        out += "⎢" + "|".join(str(col).ljust(max_len[i]) for i, col in enumerate(cols)) + "⎥\n"
     out += "⎣" + "|".join(["_"*max_l for max_l in max_len]) + "⎦\n"
     out += "</pre>"
     return out

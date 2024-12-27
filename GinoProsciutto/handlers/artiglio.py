@@ -2,6 +2,8 @@ from utils import Utils
 from telethon import events, Button
 import logging
 import requests, bs4
+import matplotlib.pyplot as plt
+import pandas as pd
 
 """
     Ranking row
@@ -86,6 +88,51 @@ class Match:
     def __repr__(self):
         return f"{self.home_team} vs {self.away_team}"
 
+def create_tables(teams_data, image: bool = False, local: bool = True):
+    data = {
+        "#": [team.local_rank if local else team.global_rank for team in teams_data],
+        "Nome": [team.name for team in teams_data],
+        "Posizione": [team.local_rank for team in teams_data],
+        "Punti": [team.points for team in teams_data],
+        " G ": [team.played for team in teams_data],
+        " V ": [team.won for team in teams_data],
+        " P ": [team.lost for team in teams_data],
+        "P/G": [round(team.points/team.played, 3) for team in teams_data],
+        "QS": [team.set_ratio for team in teams_data],
+        "QP": [team.points_ratio for team in teams_data],
+    }
+    if local:
+        scale_factor = 3
+        data.pop("Posizione")
+        data.pop("P/G")
+    else:
+        scale_factor = 1.75
+        data.pop(" G ")
+        data.pop(" V ")
+        data.pop(" P ")
+    df = pd.DataFrame(data)
+    if image:
+        fig, ax = plt.subplots(figsize=(12, 10), dpi=200)  # Increase the figure size and resolution.
+        ax.axis("tight")
+        ax.axis("off")
+        table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center")
+        
+        # Set first row text color to red and first column text weight to bold
+        for (i, j), cell in table.get_celld().items():
+            if i == 0:
+                cell.set_text_props(color="red")
+                cell.set_text_props(weight="bold")
+            if j == 0:
+                cell.set_text_props(weight="bold")
+        
+        # Adjust column widths to fit content
+        table.auto_set_column_width(col=list(range(len(df.columns))))
+        table.scale(1, scale_factor)  # Add some padding to the table
+        
+        plt.savefig("table.png", bbox_inches="tight", pad_inches=0.1)
+    else:
+        return df.to_string()
+
 def load_teams(url: str):
     teams = []
     res = requests.get(url)
@@ -101,11 +148,15 @@ def load_teams(url: str):
         teams.append(team)
     return teams
 
-def get_full_ranks():
+def get_full_ranks(local: bool = True):
     teams = load_teams(Utils.artiglio_ranking_url)
     teams = teams + load_teams(Utils.artiglio_ranking_url.split("girone=B")[0] + "girone=A")
-    # sort the teams based on (order is important): points, number of wins, QS, QP
-    teams.sort(key=lambda x: (x.points, x.won, x.set_ratio, x.points_ratio), reverse=True)
+    if local:
+        # sort the teams based on (order is important): points, number of wins, QS, QP
+        teams.sort(key=lambda x: (x.points, x.won, x.set_ratio, x.points_ratio), reverse=True)
+    else:
+        # sort the teams based on (order is important): local rank, points/played, QS, QP
+        teams.sort(key=lambda x: (x.local_rank, -x.points/x.played, -x.set_ratio, -x.points_ratio))
     for i, team in enumerate(teams):
         team.global_rank = i + 1
     return teams
@@ -125,13 +176,15 @@ def get_matches():
         matches[-1].result = matches[-1].result[0:5]
     return matches
 
-def ranking(event: events.newmessage.NewMessage.Event, local: bool):
-    logging.info("received: ranking")
-    teams = get_full_ranks()
+async def ranking(event: events.newmessage.NewMessage.Event, local: bool):
+    logging.info(f"received: ranking: {'local' if local else 'global'}")
+    loading_msg = await event.client.send_message(event.chat, "Loading...")
+    teams = get_full_ranks(local)
     if local == True:
         # get only the teams in the same round as artiglio
         artiglio_round = [team for team in teams if "artiglio" in team.name.lower()][0].round
         teams = [team for team in teams if team.round == artiglio_round]
+    '''
     # send a nice formatted message using html. the row with "artiglio" is bold
     headers = ["Rank", "Nome", "Punti", "Giocate"]
     # get longest string for each column
@@ -149,6 +202,12 @@ def ranking(event: events.newmessage.NewMessage.Event, local: bool):
     out += "⎣" + "|".join(["_"*max_l for max_l in max_len]) + "⎦\n"
     out += "</pre>"
     return out
+    '''
+    # hardcode the image for now
+    create_tables(teams, image=True, local=local)
+    await loading_msg.delete()
+    await event.client.send_file(event.chat, "table.png", caption="Ranking")
+
 
 def artiglio_stats(event: events.newmessage.NewMessage.Event):
     teams = get_full_ranks()
@@ -195,16 +254,16 @@ async def callback(event):
     output = ""
     html_parse = False
     if event.data == b"artiglio__local_rank":
-        output = ranking(event, local=True)
+        output = await ranking(event, local=True)
         html_parse = True
     elif event.data == b"artiglio__global_rank":
-        output = ranking(event, local=False)
+        output = await ranking(event, local=False)
         html_parse = True
     elif event.data == b"artiglio__stats":
         output = artiglio_stats(event)
     elif event.data == b"artiglio__close_menu":
         return await event.delete()
-    return await event.client.send_message(event.chat, output[:4000], parse_mode="html" if html_parse else "md")
+    # return await event.client.send_message(event.chat, output[:4000], parse_mode="html" if html_parse else "md")
 
 @events.register(events.NewMessage(pattern="/artiglio"))
 async def artiglio(event: events.newmessage.NewMessage):
@@ -215,8 +274,8 @@ async def artiglio(event: events.newmessage.NewMessage):
         message="Select one of the options below",
         buttons=[
             [
-                Button.inline("🥇 Local Rank", data=b"artiglio__local_rank"),
-                Button.inline("🥇 Global Rank", data=b"artiglio__global_rank"),
+                Button.inline(f"🥇 Classifica Girone", data=b"artiglio__local_rank"),
+                Button.inline("🥇 Classifica Avulsa", data=b"artiglio__global_rank"),
             ],
             [Button.inline("📊 Stats", data=b"artiglio__stats")],
             [Button.url("🔗 FIPAV Page 🔗", url=Utils.artiglio_ranking_url)],

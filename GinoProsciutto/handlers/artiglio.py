@@ -102,7 +102,7 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
         "QP": [team.points_ratio for team in teams_data],
     }
     if local:
-        scale_factor = 3
+        scale_factor = 4
         data.pop("Posizione")
         data.pop("P/G")
     else:
@@ -112,7 +112,7 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
         data.pop(" P ")
     df = pd.DataFrame(data)
     if image:
-        fig, ax = plt.subplots(figsize=(12, 10), dpi=200)  # Increase the figure size and resolution.
+        fig, ax = plt.subplots(figsize=(10, 10), dpi=200)  # Increase the figure size and resolution.
         ax.axis("tight")
         ax.axis("off")
         table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center")
@@ -124,12 +124,14 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
                 cell.set_text_props(weight="bold")
             if j == 0:
                 cell.set_text_props(weight="bold")
+            # Set alternating row colors
+            cell.set_facecolor("white" if i % 2 == 0 else "lightgray")
         
         # Adjust column widths to fit content
         table.auto_set_column_width(col=list(range(len(df.columns))))
         table.scale(1, scale_factor)  # Add some padding to the table
         
-        plt.savefig("table.png", bbox_inches="tight", pad_inches=0.1)
+        plt.savefig(f"{'girone' if local else 'avulsa'}.png", bbox_inches="tight", pad_inches=0.1)
     else:
         return df.to_string()
 
@@ -177,36 +179,17 @@ def get_matches():
     return matches
 
 async def ranking(event: events.newmessage.NewMessage.Event, local: bool):
-    logging.info(f"received: ranking: {'local' if local else 'global'}")
+    logging.info(f"received: ranking: {'girone' if local else 'avulsa'}")
     loading_msg = await event.client.send_message(event.chat, "Loading...")
     teams = get_full_ranks(local)
     if local == True:
         # get only the teams in the same round as artiglio
         artiglio_round = [team for team in teams if "artiglio" in team.name.lower()][0].round
         teams = [team for team in teams if team.round == artiglio_round]
-    '''
-    # send a nice formatted message using html. the row with "artiglio" is bold
-    headers = ["Rank", "Nome", "Punti", "Giocate"]
-    # get longest string for each column
-    max_len = [len(header) for header in headers] # placeholders
-    out = "<pre>"
-    for team in teams:
-        for i, col in enumerate([team.local_rank if local == True else team.global_rank, team.name, team.points, team.played]):
-            max_len[i] = max(max_len[i], len(str(col)))
-    # out += "⎡" + "|".join(["⎺"*max_l for max_l in max_len]) + "⎤\n" # idk but broken on mobile
-    out += "⎢" + "|".join(header.ljust(max_len[i]) for i, header in enumerate(headers)) + "⎥\n"
-    out += "⎢" + "|".join(["-"*max_l for max_l in max_len]) + "⎥\n"
-    for team in teams:
-        cols = [team.local_rank if local == True else team.global_rank, team.name, team.points, team.played]
-        out += "⎢" + "|".join(str(col).ljust(max_len[i]) for i, col in enumerate(cols)) + "⎥\n"
-    out += "⎣" + "|".join(["_"*max_l for max_l in max_len]) + "⎦\n"
-    out += "</pre>"
-    return out
-    '''
     # hardcode the image for now
     create_tables(teams, image=True, local=local)
     await loading_msg.delete()
-    await event.client.send_file(event.chat, "table.png", caption="Ranking")
+    await event.client.send_file(event.chat, f"{'girone' if local else 'avulsa'}.png", caption=f"Classifica {'Girone' if local else 'Avulsa'}")
 
 
 def artiglio_stats(event: events.newmessage.NewMessage.Event):
@@ -263,11 +246,11 @@ async def callback(event):
         output = artiglio_stats(event)
     elif event.data == b"artiglio__close_menu":
         return await event.delete()
-    # return await event.client.send_message(event.chat, output[:4000], parse_mode="html" if html_parse else "md")
+    if output:
+        return await event.client.send_message(event.chat, output[:4000], parse_mode="html" if html_parse else "md")
 
 @events.register(events.NewMessage(pattern="/artiglio"))
 async def artiglio(event: events.newmessage.NewMessage):
-    # chat = await event.get_chat()
     bot = event.client
     await bot.send_message(
         event.chat,
@@ -282,3 +265,23 @@ async def artiglio(event: events.newmessage.NewMessage):
             [Button.inline("❌ Close Menu ❌", data=b"artiglio__close_menu")],
         ],
     )
+
+'''
+# send a nice formatted message using html. the row with "artiglio" is bold
+headers = ["Rank", "Nome", "Punti", "Giocate"]
+# get longest string for each column
+max_len = [len(header) for header in headers] # placeholders
+out = "<pre>"
+for team in teams:
+    for i, col in enumerate([team.local_rank if local == True else team.global_rank, team.name, team.points, team.played]):
+        max_len[i] = max(max_len[i], len(str(col)))
+# out += "⎡" + "|".join(["⎺"*max_l for max_l in max_len]) + "⎤\n" # idk but broken on mobile
+out += "⎢" + "|".join(header.ljust(max_len[i]) for i, header in enumerate(headers)) + "⎥\n"
+out += "⎢" + "|".join(["-"*max_l for max_l in max_len]) + "⎥\n"
+for team in teams:
+    cols = [team.local_rank if local == True else team.global_rank, team.name, team.points, team.played]
+    out += "⎢" + "|".join(str(col).ljust(max_len[i]) for i, col in enumerate(cols)) + "⎥\n"
+out += "⎣" + "|".join(["_"*max_l for max_l in max_len]) + "⎦\n"
+out += "</pre>"
+return out
+'''

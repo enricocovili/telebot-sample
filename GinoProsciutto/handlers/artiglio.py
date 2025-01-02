@@ -4,6 +4,7 @@ import logging
 import requests, bs4
 import matplotlib.pyplot as plt
 import pandas as pd
+import json
 
 """
     Ranking row
@@ -52,12 +53,24 @@ class Team:
         self.penalties = int(penalties)
         self.global_rank = -1
 
+    def to_json(self):
+        # get all attributes except global_rank and return json formatted string
+        return {k: v for k, v in self.__dict__.items() if k != "global_rank"}
+
     def __str__(self):
         return f"{self.name}"
 
     def __repr__(self):
         return f"{self.round} | {self.name}"
-
+    
+    def __eq__(self, value):
+        # compare json representation of the object
+        if isinstance(value, Team):
+            return self.to_json() == value.to_json()
+        if isinstance(value, dict):
+            # exclude global_rank from value
+            temp_val = {k: v for k, v in value.items() if k != "global_rank"}
+            return self.to_json() == temp_val
 """
     Match row
     0. Skip
@@ -102,7 +115,7 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
         "QP": [team.points_ratio for team in teams_data],
     }
     if local:
-        scale_factor = 4
+        scale_factor = 3.5
         data.pop("Posizione")
         data.pop("P/G")
     else:
@@ -155,6 +168,9 @@ def get_full_ranks(local: bool = True):
     teams = teams + load_teams(Utils.artiglio_ranking_url.split("girone=B")[0] + "girone=A")
     if local:
         # sort the teams based on (order is important): points, number of wins, QS, QP
+        # get only the teams in the same round as artiglio
+        artiglio_round = [team for team in teams if "artiglio" in team.name.lower()][0].round
+        teams = [team for team in teams if team.round == artiglio_round]
         teams.sort(key=lambda x: (x.points, x.won, x.set_ratio, x.points_ratio), reverse=True)
     else:
         # sort the teams based on (order is important): local rank, points/played, QS, QP
@@ -182,12 +198,26 @@ async def ranking(event: events.newmessage.NewMessage.Event, local: bool):
     logging.info(f"received: ranking: {'girone' if local else 'avulsa'}")
     loading_msg = await event.client.send_message(event.chat, "Loading...")
     teams = get_full_ranks(local)
-    if local == True:
-        # get only the teams in the same round as artiglio
-        artiglio_round = [team for team in teams if "artiglio" in team.name.lower()][0].round
-        teams = [team for team in teams if team.round == artiglio_round]
-    # hardcode the image for now
-    create_tables(teams, image=True, local=local)
+    # open teams.json and check if the teams are the same as the ones in the ranking
+    json_team_data = [team.to_json() for team in teams]
+    reuse_table = False
+    try:
+        with open("teams.json", "r") as f:
+            old_teams = json.load(f)
+
+            # check if the new teams are a subset of the old ones
+            test = [team in old_teams for team in json_team_data]
+            if all(test):
+                logging.info("reusing old table")
+                reuse_table = True
+    except FileNotFoundError:
+        pass
+    if not reuse_table:
+        logging.info("creating new table")
+        with open("teams.json", "w") as f:
+            json.dump(json_team_data, f, indent=4)
+        # hardcode the image for now
+        create_tables(teams, image=True, local=local)
     await loading_msg.delete()
     await event.client.send_file(event.chat, f"{'girone' if local else 'avulsa'}.png", caption=f"Classifica {'Girone' if local else 'Avulsa'}")
 

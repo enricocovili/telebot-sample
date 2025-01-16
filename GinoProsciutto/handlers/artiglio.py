@@ -290,8 +290,8 @@ async def artiglio(event: events.newmessage.NewMessage):
                 Button.inline(f"🥇 Classifica Girone", data=b"artiglio__local_rank"),
                 Button.inline("🥇 Classifica Avulsa", data=b"artiglio__global_rank"),
             ],
-            [Button.inline("📊 Stats", data=b"artiglio__stats")],
-            [Button.url("🔗 FIPAV Page 🔗", url=Utils.artiglio_ranking_url)],
+            [Button.inline("📊 Info & next match", data=b"artiglio__stats")],
+            [Button.url("🔗 Pagina web FIPAV 🔗", url=Utils.artiglio_ranking_url)],
             [Button.inline("❌ Close Menu ❌", data=b"artiglio__close_menu")],
         ],
     )

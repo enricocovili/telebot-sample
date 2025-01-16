@@ -49,11 +49,13 @@ class Utils:
             r"^(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/"
         )
         if yt_re.match(msg):
-            return msg
+            return msg.split("?")[0]
         msg = f"ytsearch:{msg}"
         with yt_dlp.YoutubeDL(Utils.ydl_opts) as ydl:
             url = ydl.extract_info(msg, download=False)
-        return url["entries"][0]["webpage_url"]
+        final_url = url["entries"][0]["webpage_url"]
+        final_url = final_url.split("?")[0]
+        return final_url
 
     def get_temperature(full_temp):
         reducedtemp = full_temp.split()[-1]

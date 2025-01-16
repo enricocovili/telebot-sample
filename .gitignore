@@ -143,3 +143,6 @@ tmp_song/*
 *.session
 *.session-journal
 *.json
+*.png
+*.jpg
+*.jpeg

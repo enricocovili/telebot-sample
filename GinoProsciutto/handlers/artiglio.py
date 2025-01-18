@@ -105,7 +105,7 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
     data = {
         "#": [team.local_rank if local else team.global_rank for team in teams_data],
         "Nome": [team.name for team in teams_data],
-        "Posizione": [team.local_rank for team in teams_data],
+        "# Girone": [team.local_rank for team in teams_data],
         "Punti": [team.points for team in teams_data],
         " G ": [team.played for team in teams_data],
         " V ": [team.won for team in teams_data],
@@ -116,7 +116,7 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
     }
     if local:
         scale_factor = 3.5
-        data.pop("Posizione")
+        data.pop("# Girone")
         data.pop("P/G")
     else:
         scale_factor = 1.75
@@ -139,6 +139,12 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
                 cell.set_text_props(weight="bold")
             # Set alternating row colors
             cell.set_facecolor("white" if i % 2 == 0 else "lightgray")
+
+        # set ARTIGLIO row to a light yellow background
+        for i, row in df.iterrows():
+            if "artiglio" in row["Nome"].lower():
+                for j in range(len(df.columns)):
+                    table[(i+1, j)].set_facecolor("lightyellow")        
         
         # Adjust column widths to fit content
         table.auto_set_column_width(col=list(range(len(df.columns))))
@@ -220,7 +226,6 @@ async def ranking(event: events.newmessage.NewMessage.Event, local: bool):
         create_tables(teams, image=True, local=local)
     await loading_msg.delete()
     await event.client.send_file(event.chat, f"{'girone' if local else 'avulsa'}.png", caption=f"Classifica {'Girone' if local else 'Avulsa'}")
-
 
 def artiglio_stats(event: events.newmessage.NewMessage.Event):
     teams = get_full_ranks()

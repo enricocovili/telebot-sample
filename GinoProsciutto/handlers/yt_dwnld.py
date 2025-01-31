@@ -14,11 +14,16 @@ async def download_and_clean(url: str, event: events.newmessage.NewMessage):
     # Spoiler: there is only one file in it because yt_dl download
     # changes some characters sometimes (idk how it works)
     file_path = list(Path("tmp_song").rglob("*"))
-    await event.client.send_message(
-        event.chat,
-        file=file_path[0],
-        buttons=event.client.build_reply_markup(Button.url("🔗 YT link 🔗", url=url)),
-    )
+    try:
+        await event.client.send_message(
+            event.chat,
+            file=file_path[0],
+            buttons=event.client.build_reply_markup(Button.url("🔗 YT link 🔗", url=url)),
+        )
+    except IndexError as e:
+        logging.error(f"IndexError: {e}")
+        return await event.client.send_message(
+            event.chat, message="❌ An error occured ❌")
     await event.client.delete_messages(event.chat, msg)
     [file.unlink() for file in file_path]  # clear ./tmp_song (debug reason)
     return
@@ -58,18 +63,21 @@ async def callback(event):
 
 
 @events.register(events.NewMessage(pattern="/yt"))
-async def yt_download(event):
+async def yt_download(event, url=None):
     bot = event.client
     response = await bot.send_message(event.chat, message="🔍 Retreiving info... 🔍")
-    msg = " ".join(event.text.split()[1:])
-    if not len(msg):
-        return await bot.edit_message(
-            event.chat,
-            message=response,
-            text="❗Write the name of the song after the command❗\n"
-            "(example: /yt despacito)",
-        )
-    url = Utils.get_url(msg)
+    if url is not None:
+        msg = url
+    else:
+        msg = " ".join(event.text.split()[1:])
+        if not len(msg):
+            return await bot.edit_message(
+                event.chat,
+                message=response,
+                text="❗Write the name of the song after the command❗\n"
+                "(example: /yt despacito)",
+            )
+        url = Utils.get_url(msg)
     if "error" in msg:
         return await bot.edit_message(
             event.chat, message=response, text=f"{url}\n❌ An error occured ❌"

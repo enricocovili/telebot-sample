@@ -27,6 +27,15 @@ async def shaggy(event):
     await bot.send_file(event.chat, "./shaggy.jpeg", caption="Shaggy")
 
 
+# callback for every message that is not a command
+@bot.on(events.NewMessage())
+async def callback(event):
+    url = Utils.get_url(event.text, force_url=True)
+    if not url:
+        return
+    await yt_dwnld.yt_download(event, url)
+        
+
 if __name__ == "__main__":
     # clear tmp_song
     [file.unlink() for file in Utils.out_tmpl_ytdl.parent.glob("*")]

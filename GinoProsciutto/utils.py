@@ -44,12 +44,14 @@ class Utils:
     def pattern_constructor(patterns: list):
         return r"".join(f"(/{pattern})|" for pattern in patterns)[:-1]
 
-    def get_url(msg):
+    def get_url(msg, force_url=False):
         yt_re = re.compile(
             r"^(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/"
         )
         if yt_re.match(msg):
             return msg.split("?")[0]
+        elif force_url:
+            return None
         msg = f"ytsearch:{msg}"
         with yt_dlp.YoutubeDL(Utils.ydl_opts) as ydl:
             url = ydl.extract_info(msg, download=False)

@@ -2,6 +2,7 @@ import json
 from dotenv import load_dotenv
 from pathlib import Path
 import yt_dlp
+import spotipy
 import re
 import subprocess
 
@@ -15,6 +16,8 @@ class Utils:
     TOKEN = config.get("BOT_TOKEN")
     APP_ID = config.get("APP_ID")
     APP_HASH = config.get("APP_HASH")
+    SPOTIFY_CLIENT_ID = config.get("SPOTIFY_CLIENT_ID")
+    SPOTIFY_CLIENT_SECRET = config.get("SPOTIFY_CLIENT_SECRET")
     WHITELIST_IDS = config.get("WHITELIST_IDS")
     artiglio_ranking_url = config.get("volley_ranking_url")
 
@@ -41,6 +44,13 @@ class Utils:
         {"discord_bot": ["systemctl", "is-active", "discord_bot_py"]},
     ]
 
+    sp = spotipy.Spotify(
+        auth_manager=spotipy.SpotifyClientCredentials(
+            client_id=SPOTIFY_CLIENT_ID,
+            client_secret=SPOTIFY_CLIENT_SECRET,
+        )
+    )
+
     def pattern_constructor(patterns: list):
         return r"".join(f"(/{pattern})|" for pattern in patterns)[:-1]
 
@@ -49,14 +59,20 @@ class Utils:
             r"^(https?://)?(www\.)?(youtube|youtu|youtube-nocookie)\.(com|be)/"
         )
         if yt_re.match(msg):
-            return msg.split("?")[0]
+            return msg
+        # check if a spotify link is provided
+        if "open.spotify.com" in msg:  
+            try:
+                track = Utils.sp.track(msg)
+            except spotipy.exceptions.SpotifyException:
+                return None
+            msg = f"ytsearch:{track['name']}"
         elif force_url:
             return None
-        msg = f"ytsearch:{msg}"
         with yt_dlp.YoutubeDL(Utils.ydl_opts) as ydl:
             url = ydl.extract_info(msg, download=False)
         final_url = url["entries"][0]["webpage_url"]
-        final_url = final_url.split("?")[0]
+        # final_url = final_url.split("?")[0]
         return final_url
 
     def get_temperature(full_temp):

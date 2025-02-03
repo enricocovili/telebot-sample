@@ -62,8 +62,7 @@ async def callback(event):
     await download_and_clean(url, event)
 
 
-@events.register(events.NewMessage(pattern="/yt"))
-async def yt_download(event, url=None):
+async def download(event, url=None):
     bot = event.client
     response = await bot.send_message(event.chat, message="🔍 Retreiving info... 🔍")
     if url is not None:

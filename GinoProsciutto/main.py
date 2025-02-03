@@ -33,7 +33,7 @@ async def callback(event):
     url = Utils.get_url(event.text, force_url=True)
     if not url:
         return
-    await yt_dwnld.yt_download(event, url)
+    await media_dwnld.download(event, url)
         
 
 if __name__ == "__main__":
@@ -42,8 +42,7 @@ if __name__ == "__main__":
 
     logging.info("tmp_song cleared")
 
-    bot.add_event_handler(yt_dwnld.yt_download)
-    bot.add_event_handler(yt_dwnld.callback)
+    bot.add_event_handler(media_dwnld.callback)
     
     bot.add_event_handler(menu.callback)
     bot.add_event_handler(menu.menu)

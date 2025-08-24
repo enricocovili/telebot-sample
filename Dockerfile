@@ -1,14 +1,23 @@
-# syntax=docker/dockerfile:1
+# Use the official uv image for faster builds
+FROM ghcr.io/astral-sh/uv:python3.13-alpine
 
-# This dockerfile is not working
+# install ssh
+RUN apk add --no-cache openssh-client
 
-FROM python:3.10-slim-buster
-
+# Set working directory
 WORKDIR /app
 
+# Copy uv configuration files first for better layer caching
+COPY pyproject.toml uv.lock ./
+
+# Install dependencies using uv
+RUN uv sync --frozen --no-dev
+
+# Copy the rest of the application code
 COPY . .
 
-RUN pip3 install -r requirements.txt
-RUN echo "*/2 * * * * root /app/GinoProsciutto/cron.py" >> /etc/crontab
+# Set the Python path to use uv's virtual environment
+ENV PATH="/app/.venv/bin:$PATH"
 
-CMD [ "python3", "GinoProsciutto/main.py"]
+# Run the application
+CMD ["uv", "run", "GinoProsciutto/main.py"]

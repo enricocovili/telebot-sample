@@ -77,7 +77,6 @@ class Utils:
         return final_url
 
     def get_temperature(full_temp):
-        logging.info(f"Formatting temperature from: {full_temp}")
         reducedtemp = full_temp.split()[-1]
         reducedtemp = f"{reducedtemp[:2]}.{reducedtemp[2:-1]}°C\n"
         return f"{' '.join(full_temp.split()[:-1])} {reducedtemp}"

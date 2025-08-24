@@ -4,7 +4,7 @@ from pathlib import Path
 import yt_dlp
 import spotipy
 import re
-import subprocess
+import subprocess, logging
 
 load_dotenv()
 
@@ -13,13 +13,14 @@ class Utils:
     with open("config.json", "r") as f:
         config = json.load(f)
 
-    TOKEN = config.get("BOT_TOKEN")
-    APP_ID = config.get("APP_ID")
-    APP_HASH = config.get("APP_HASH")
-    SPOTIFY_CLIENT_ID = config.get("SPOTIFY_CLIENT_ID")
-    SPOTIFY_CLIENT_SECRET = config.get("SPOTIFY_CLIENT_SECRET")
-    WHITELIST_IDS = config.get("WHITELIST_IDS")
-    artiglio_ranking_url = config.get("volley_ranking_url")
+    TOKEN: str = config.get("BOT_TOKEN")
+    APP_ID: int = config.get("APP_ID")
+    APP_HASH: str = config.get("APP_HASH")
+    SPOTIFY_CLIENT_ID: str = config.get("SPOTIFY_CLIENT_ID")
+    SPOTIFY_CLIENT_SECRET: str = config.get("SPOTIFY_CLIENT_SECRET")
+    WHITELIST_IDS: list[int] = config.get("WHITELIST_IDS")
+    artiglio_ranking_url: str = config.get("volley_ranking_url")
+    TEMPERATURE_WARNING_LIMIT: float = config.get("TEMPERATURE_WARNING_LIMIT")
 
     out_tmpl_ytdl = Path("tmp_song/%(title)s")
 
@@ -76,6 +77,7 @@ class Utils:
         return final_url
 
     def get_temperature(full_temp):
+        logging.info(f"Formatting temperature from: {full_temp}")
         reducedtemp = full_temp.split()[-1]
         reducedtemp = f"{reducedtemp[:2]}.{reducedtemp[2:-1]}°C\n"
         return f"{' '.join(full_temp.split()[:-1])} {reducedtemp}"

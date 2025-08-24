@@ -1,15 +1,14 @@
 from telethon import TelegramClient
 from telethon.errors import FloodWaitError
 from utils import Utils
-import asyncio, subprocess, re
-
-temp_limit = 52.00
+import asyncio, subprocess, re, logging
 
 
-async def journal_log():
-    bot = TelegramClient("cron", api_id=Utils.APP_ID, api_hash=Utils.APP_HASH)
-    await bot.start(bot_token=Utils.TOKEN)
-    await bot.connect()
+async def journal_log(bot: TelegramClient):
+    # bot = TelegramClient("cron", api_id=Utils.APP_ID, api_hash=Utils.APP_HASH)
+    # await bot.start(bot_token=Utils.TOKEN)
+    # await bot.connect()
+    logging.info("Checking CPU temperature")
     gino_id = Utils.WHITELIST_IDS[0]
     try:
         # using ID instead of nick is needed to access
@@ -22,7 +21,10 @@ async def journal_log():
     temp = await Utils._exec(gino_id, cmd=cmd, name="🌡️ temp")
     temp = Utils.get_temperature(temp)
     temp = re.search(r"[0-9]+\.[0-9]+", temp).group(0)
-    if float(temp) >= temp_limit:
+    logging.info(
+        f"Current CPU temperature: {temp}°C. Limit is {Utils.TEMPERATURE_WARNING_LIMIT}°C"
+    )
+    if float(temp) >= Utils.TEMPERATURE_WARNING_LIMIT:
         top_output = (
             subprocess.check_output(["top", "-b", "-n", "1"])
             .decode("utf-8")
@@ -41,6 +43,3 @@ async def journal_log():
             gino, f"CPU TEMPERATURE WARNING: {temp}°C\nMore info:\n{cleared_output}"
         )
     # top -b -n 1 | head -n 15 | tail -n 9 | awk '{printf "%5s %5s %5s %5s %s\n", $1, $2, $9, $10, $12}'
-
-
-asyncio.run(journal_log())

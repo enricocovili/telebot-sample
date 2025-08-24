@@ -1,7 +1,8 @@
 from telethon import events
 from utils import Utils
 from handlers import *
-import logging
+import logging, schedule, time, asyncio, threading
+from cronjob_monitor import journal_log
 
 # setup logging to file
 logging.basicConfig(
@@ -13,6 +14,22 @@ logging.basicConfig(
 )
 
 bot = client.bot
+
+
+loop = asyncio.get_event_loop()
+
+
+def scheduler_loop():
+    schedule.every(10).seconds.do(
+        lambda: asyncio.run_coroutine_threadsafe(journal_log(bot), loop)
+    )
+    try:
+        while True:
+            # logging.info("executing scheduled job")
+            schedule.run_pending()
+            time.sleep(1)
+    except Exception as e:
+        logging.error(f"Error in scheduler loop: {e}")
 
 
 @bot.on(events.NewMessage(pattern=Utils.pattern_constructor(["help", "start"])))
@@ -55,5 +72,8 @@ if __name__ == "__main__":
     logging.info(f"commands loaded")
 
     bot.start(bot_token=Utils.TOKEN)
+
+    threading.Thread(target=scheduler_loop, daemon=True).start()
+
     # load_commands(bot)
     bot.run_until_disconnected()

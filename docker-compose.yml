@@ -5,13 +5,10 @@ services:
     build: .
     container_name: telegram-bot
     restart: unless-stopped
-    environment:
-      - BOT_TOKEN=${BOT_TOKEN}
     volumes:
       - /sys:/sys:ro
       - /proc:/proc:ro
     tty: true
     stdin_open: true
     privileged: true   # only if you really need host-like shell access
-    networks:
-      - host
+    network_mode: host

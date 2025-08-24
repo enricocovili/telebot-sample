@@ -1,8 +1,5 @@
 # Use the official uv image for faster builds
-FROM ghcr.io/astral-sh/uv:python3.13-alpine
-
-# install ssh
-RUN apk add --no-cache openssh-client
+FROM ghcr.io/astral-sh/uv:python3.9-trixie-slim
 
 # Set working directory
 WORKDIR /app

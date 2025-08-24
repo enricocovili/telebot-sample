@@ -8,6 +8,11 @@ services:
     volumes:
       - /sys:/sys:ro
       - /proc:/proc:ro
+    environment:
+      - SSH_USER=${SSH_USER}
+      - SSH_HOST=${SSH_HOST}
+      - SSH_PASSWORD=${SSH_PASSWORD}
+      - docker_mode: true
     tty: true
     stdin_open: true
     privileged: true   # only if you really need host-like shell access

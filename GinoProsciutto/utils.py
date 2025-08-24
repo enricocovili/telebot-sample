@@ -4,7 +4,8 @@ from pathlib import Path
 import yt_dlp
 import spotipy
 import re
-import subprocess, logging
+import os
+import subprocess
 
 load_dotenv()
 
@@ -87,12 +88,29 @@ class Utils:
         if chat_id not in Utils.WHITELIST_IDS:
             return "❌ You are not allowed to use this command ❌"
         try:
-            output = subprocess.run(
-                [*cmd],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-            )
+            if os.getenv("docker_mode") == "true":
+                output = subprocess.run(
+                    [
+                        "sshpass",
+                        "-p",
+                        os.getenv("SSH_PASSWORD"),
+                        "ssh",
+                        "-l",
+                        os.getenv("SSH_USER"),
+                        os.getenv("SSH_HOST"),
+                        *cmd,
+                    ],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
+            else:
+                output = subprocess.run(
+                    cmd,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                )
         except FileNotFoundError as e:
             return f"❌ {e}"
         out = output.stdout if output.stdout else output.stderr

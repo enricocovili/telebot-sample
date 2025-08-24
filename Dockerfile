@@ -1,6 +1,8 @@
 # Use the official uv image for faster builds
 FROM ghcr.io/astral-sh/uv:python3.9-trixie-slim
 
+RUN apt update && apt install -y sshpass
+
 # Set working directory
 WORKDIR /app
 

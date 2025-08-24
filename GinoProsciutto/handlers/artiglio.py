@@ -29,8 +29,31 @@ import json
     18. Pen (Penalties)
 """
 
+
 class Team:
-    def __init__(self, round, rank, name, points, played, won, lost, three_zero, three_one, three_two, two_three, one_three, zero_three, sets_won, sets_lost, set_ratio, points_won, points_lost, points_ratio, penalties):
+    def __init__(
+        self,
+        round,
+        rank,
+        name,
+        points,
+        played,
+        won,
+        lost,
+        three_zero,
+        three_one,
+        three_two,
+        two_three,
+        one_three,
+        zero_three,
+        sets_won,
+        sets_lost,
+        set_ratio,
+        points_won,
+        points_lost,
+        points_ratio,
+        penalties,
+    ):
         self.round = round
         self.local_rank = int(rank)
         self.name = name
@@ -62,7 +85,7 @@ class Team:
 
     def __repr__(self):
         return f"{self.round} | {self.name}"
-    
+
     def __eq__(self, value):
         # compare json representation of the object
         if isinstance(value, Team):
@@ -71,6 +94,8 @@ class Team:
             # exclude global_rank from value
             temp_val = {k: v for k, v in value.items() if k != "global_rank"}
             return self.to_json() == temp_val
+
+
 """
     Match row
     0. Skip
@@ -85,8 +110,11 @@ class Team:
     9. Skip
 """
 
+
 class Match:
-    def __init__(self, __a, code, date, week_day, time, home_team, away_team, __b, result, __c):
+    def __init__(
+        self, __a, code, date, week_day, time, home_team, away_team, __b, result, __c
+    ):
         self.code = code
         self.date = date
         self.week_day = week_day
@@ -101,6 +129,7 @@ class Match:
     def __repr__(self):
         return f"{self.home_team} vs {self.away_team}"
 
+
 def create_tables(teams_data, image: bool = False, local: bool = True):
     data = {
         "#": [team.local_rank if local else team.global_rank for team in teams_data],
@@ -110,7 +139,7 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
         " G ": [team.played for team in teams_data],
         " V ": [team.won for team in teams_data],
         " P ": [team.lost for team in teams_data],
-        "P/G": [round(team.points/team.played, 3) for team in teams_data],
+        "P/G": [round(team.points / team.played, 3) for team in teams_data],
         "QS": [team.set_ratio for team in teams_data],
         "QP": [team.points_ratio for team in teams_data],
     }
@@ -125,11 +154,15 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
         data.pop(" P ")
     df = pd.DataFrame(data)
     if image:
-        fig, ax = plt.subplots(figsize=(10, 10), dpi=200)  # Increase the figure size and resolution.
+        fig, ax = plt.subplots(
+            figsize=(10, 10), dpi=200
+        )  # Increase the figure size and resolution.
         ax.axis("tight")
         ax.axis("off")
-        table = ax.table(cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center")
-        
+        table = ax.table(
+            cellText=df.values, colLabels=df.columns, cellLoc="center", loc="center"
+        )
+
         # Set first row text color to red and first column text weight to bold
         for (i, j), cell in table.get_celld().items():
             if i == 0:
@@ -144,15 +177,20 @@ def create_tables(teams_data, image: bool = False, local: bool = True):
         for i, row in df.iterrows():
             if "artiglio" in row["Nome"].lower():
                 for j in range(len(df.columns)):
-                    table[(i+1, j)].set_facecolor("lightyellow")        
-        
+                    table[(i + 1, j)].set_facecolor("lightyellow")
+
         # Adjust column widths to fit content
         table.auto_set_column_width(col=list(range(len(df.columns))))
         table.scale(1, scale_factor)  # Add some padding to the table
-        
-        plt.savefig(f"{'girone' if local else 'avulsa'}.png", bbox_inches="tight", pad_inches=0.1)
+
+        plt.savefig(
+            f"{'girone' if local else 'avulsa'}.png",
+            bbox_inches="tight",
+            pad_inches=0.1,
+        )
     else:
         return df.to_string()
+
 
 def load_teams(url: str):
     teams = []
@@ -169,21 +207,36 @@ def load_teams(url: str):
         teams.append(team)
     return teams
 
+
 def get_full_ranks(local: bool = True):
     teams = load_teams(Utils.artiglio_ranking_url)
-    teams = teams + load_teams(Utils.artiglio_ranking_url.split("girone=B")[0] + "girone=A")
+    teams = teams + load_teams(
+        Utils.artiglio_ranking_url.split("girone=B")[0] + "girone=A"
+    )
     if local:
         # sort the teams based on (order is important): points, number of wins, QS, QP
         # get only the teams in the same round as artiglio
-        artiglio_round = [team for team in teams if "artiglio" in team.name.lower()][0].round
+        artiglio_round = [team for team in teams if "artiglio" in team.name.lower()][
+            0
+        ].round
         teams = [team for team in teams if team.round == artiglio_round]
-        teams.sort(key=lambda x: (x.points, x.won, x.set_ratio, x.points_ratio), reverse=True)
+        teams.sort(
+            key=lambda x: (x.points, x.won, x.set_ratio, x.points_ratio), reverse=True
+        )
     else:
         # sort the teams based on (order is important): local rank, points/played, QS, QP
-        teams.sort(key=lambda x: (x.local_rank, -x.points/x.played, -x.set_ratio, -x.points_ratio))
+        teams.sort(
+            key=lambda x: (
+                x.local_rank,
+                -x.points / x.played,
+                -x.set_ratio,
+                -x.points_ratio,
+            )
+        )
     for i, team in enumerate(teams):
         team.global_rank = i + 1
     return teams
+
 
 def get_matches():
     res = requests.get(Utils.artiglio_ranking_url)
@@ -191,7 +244,9 @@ def get_matches():
     soup = bs4.BeautifulSoup(res.text, "html.parser")
     matches = []
     for match in soup.select("table")[1].select("tr"):
-        if not "dispari" in match.get("class", []) and not "pari" in match.get("class", []):
+        if not "dispari" in match.get("class", []) and not "pari" in match.get(
+            "class", []
+        ):
             continue
         cols = match.select("td")
         if len(cols) == 0:
@@ -199,6 +254,7 @@ def get_matches():
         matches.append(Match(*[col.getText() for col in cols]))
         matches[-1].result = matches[-1].result[0:5]
     return matches
+
 
 async def ranking(event: events.newmessage.NewMessage.Event, local: bool):
     logging.info(f"received: ranking: {'girone' if local else 'avulsa'}")
@@ -225,23 +281,28 @@ async def ranking(event: events.newmessage.NewMessage.Event, local: bool):
         # hardcode the image for now
         create_tables(teams, image=True, local=local)
     await loading_msg.delete()
-    await event.client.send_file(event.chat, f"{'girone' if local else 'avulsa'}.png", caption=f"Classifica {'Girone' if local else 'Avulsa'}")
+    await event.client.send_file(
+        event.chat,
+        f"{'girone' if local else 'avulsa'}.png",
+        caption=f"Classifica {'Girone' if local else 'Avulsa'}",
+    )
+
 
 def artiglio_stats(event: events.newmessage.NewMessage.Event):
     teams = get_full_ranks()
     matches = get_matches()
-    
+
     info_artiglio = [team for team in teams if "artiglio" in team.name.lower()][0]
 
     last_match = Match("", "", "", "", "", "", "", "", "", "")
     next_match = Match("", "", "", "", "", "", "", "", "", "")
 
     for ix, match in enumerate(matches[:-1]):
-        if matches[ix+1].result == "":
+        if matches[ix + 1].result == "":
             last_match = match
-            next_match = matches[ix+1]
+            next_match = matches[ix + 1]
             break
-    
+
     # Mobile friendly output
     output = f"""
         Informazioni su **Artiglio**:
@@ -250,20 +311,31 @@ def artiglio_stats(event: events.newmessage.NewMessage.Event):
         ⬤ **Punti**: {info_artiglio.points}
         ⬤ **% Vittorie**: {round(info_artiglio.won / info_artiglio.played * 100, 2)}% ({info_artiglio.won}/{info_artiglio.played})
         ⬤ **Prossima partita**:
-            {next_match.week_day + ' ' + next_match.date + ' ' + next_match.time}
-            vs {next_match.away_team if 'artiglio' in next_match.home_team.lower() else next_match.home_team} 
-            ({'casa' if 'artiglio' in next_match.home_team.lower() else 'ospiti'})
+            {next_match.week_day + " " + next_match.date + " " + next_match.time}
+            vs {next_match.away_team if "artiglio" in next_match.home_team.lower() else next_match.home_team} 
+            ({"casa" if "artiglio" in next_match.home_team.lower() else "ospiti"})
         ⬤ **Ultima partita**: 
-            {last_match.week_day + ' ' + last_match.date + ' ' + last_match.time}
-            vs {last_match.away_team if 'artiglio' in last_match.home_team.lower() else last_match.home_team}
-            ({last_match.result}) ({'casa' if 'artiglio' in last_match.home_team.lower() else 'ospiti'})
+            {last_match.week_day + " " + last_match.date + " " + last_match.time}
+            vs {last_match.away_team if "artiglio" in last_match.home_team.lower() else last_match.home_team}
+            ({last_match.result}) ({"casa" if "artiglio" in last_match.home_team.lower() else "ospiti"})
     """
     # All this shit is needed because i use multiline strings. I know there are better methods, i simply don't care
     # strip trailing whitespaces for every line if start with "⬤"
-    output = "\n".join([line.strip() if line.strip().startswith("⬤") else line for line in output.split("\n")])
+    output = "\n".join(
+        [
+            line.strip() if line.strip().startswith("⬤") else line
+            for line in output.split("\n")
+        ]
+    )
     # also cap every line starting with whitespaces to a max of 4 trailing whitespaces
-    output = "\n".join([4*" " + line.strip() if line.startswith(" ") else line for line in output.split("\n")])
+    output = "\n".join(
+        [
+            4 * " " + line.strip() if line.startswith(" ") else line
+            for line in output.split("\n")
+        ]
+    )
     return output
+
 
 @events.register(events.CallbackQuery)
 async def callback(event):
@@ -282,7 +354,10 @@ async def callback(event):
     elif event.data == b"artiglio__close_menu":
         return await event.delete()
     if output:
-        return await event.client.send_message(event.chat, output[:4000], parse_mode="html" if html_parse else "md")
+        return await event.client.send_message(
+            event.chat, output[:4000], parse_mode="html" if html_parse else "md"
+        )
+
 
 @events.register(events.NewMessage(pattern="/artiglio"))
 async def artiglio(event: events.newmessage.NewMessage):
@@ -301,7 +376,8 @@ async def artiglio(event: events.newmessage.NewMessage):
         ],
     )
 
-'''
+
+"""
 # send a nice formatted message using html. the row with "artiglio" is bold
 headers = ["Rank", "Nome", "Punti", "Giocate"]
 # get longest string for each column
@@ -319,4 +395,4 @@ for team in teams:
 out += "⎣" + "|".join(["_"*max_l for max_l in max_len]) + "⎦\n"
 out += "</pre>"
 return out
-'''
+"""

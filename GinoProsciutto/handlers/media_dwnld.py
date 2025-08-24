@@ -18,12 +18,15 @@ async def download_and_clean(url: str, event: events.newmessage.NewMessage):
         await event.client.send_message(
             event.chat,
             file=file_path[0],
-            buttons=event.client.build_reply_markup(Button.url("🔗 YT link 🔗", url=url)),
+            buttons=event.client.build_reply_markup(
+                Button.url("🔗 YT link 🔗", url=url)
+            ),
         )
     except IndexError as e:
         logging.error(f"IndexError: {e}")
         return await event.client.send_message(
-            event.chat, message="❌ An error occured ❌")
+            event.chat, message="❌ An error occured ❌"
+        )
     await event.client.delete_messages(event.chat, msg)
     [file.unlink() for file in file_path]  # clear ./tmp_song (debug reason)
     return

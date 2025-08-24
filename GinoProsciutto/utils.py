@@ -61,7 +61,7 @@ class Utils:
         if yt_re.match(msg):
             return msg
         # check if a spotify link is provided
-        if "open.spotify.com" in msg:  
+        if "open.spotify.com" in msg:
             try:
                 track = Utils.sp.track(msg)
             except spotipy.exceptions.SpotifyException:

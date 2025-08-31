@@ -34,16 +34,16 @@ class Utils:
     }
 
     status_commands = [
-        # ["uname", "-a"],
+        ["uname", "-a"],
         {"🕐 uptime": ["uptime", "-p"]},
         {"📊 load": ["cat", "/proc/loadavg"]},
         # {"📊 mem": ["cat", "/proc/meminfo"]},
         {"🌡️ temp": ["cat", "/sys/class/thermal/thermal_zone0/temp"]},
-        # ["df", "-h"],
+        ["df", "-h"],
         # ["pihole", "status"],
-        {"tgram_bot": ["systemctl", "is-active", "telegram_bot_py"]},
-        {"lavalink_server": ["systemctl", "is-active", "lavalink_server"]},
-        {"discord_bot": ["systemctl", "is-active", "discord_bot_py"]},
+        # {"tgram_bot": ["systemctl", "is-active", "telegram_bot_py"]},
+        # {"lavalink_server": ["systemctl", "is-active", "lavalink_server"]},
+        # {"discord_bot": ["systemctl", "is-active", "discord_bot_py"]},
     ]
 
     sp = spotipy.Spotify(

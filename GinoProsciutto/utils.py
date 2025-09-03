@@ -34,12 +34,12 @@ class Utils:
     }
 
     status_commands = [
-        ["uname", "-a"],
+        {"pc info": ["uname", "-a"]},
         {"🕐 uptime": ["uptime", "-p"]},
         {"📊 load": ["cat", "/proc/loadavg"]},
         # {"📊 mem": ["cat", "/proc/meminfo"]},
         {"🌡️ temp": ["cat", "/sys/class/thermal/thermal_zone0/temp"]},
-        ["df", "-h"],
+        {"Avaible space": ["df", "-h", "/"]},
         # ["pihole", "status"],
         # {"tgram_bot": ["systemctl", "is-active", "telegram_bot_py"]},
         # {"lavalink_server": ["systemctl", "is-active", "lavalink_server"]},

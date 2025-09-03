@@ -19,4 +19,4 @@ COPY . .
 ENV PATH="/app/.venv/bin:$PATH"
 
 # Run the application
-CMD ["python", "GinoProsciutto/main.py"]
+CMD ["uv", "run", "GinoProsciutto/main.py"]

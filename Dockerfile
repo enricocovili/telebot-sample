@@ -1,6 +1,7 @@
-FROM python:3.12-alpine
+FROM python:3.9-slim
 
-RUN apk add --no-cache openssh-client sshpass
+RUN	apt update && \
+	apt install -y openssh-client sshpass
 
 # Set working directory
 WORKDIR /app

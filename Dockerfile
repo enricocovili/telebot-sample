@@ -1,7 +1,6 @@
-# Use the official uv image for faster builds
-FROM ghcr.io/astral-sh/uv:python3.9-trixie-slim
+FROM python:3.12-alpine
 
-RUN apt update && apt install -y sshpass
+RUN apk add --no-cache openssh-client sshpass
 
 # Set working directory
 WORKDIR /app
@@ -10,13 +9,10 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 
 # Install dependencies using uv
-RUN uv sync --frozen --no-dev
+RUN pip install --upgrade pip && pip install -e .
 
 # Copy the rest of the application code
 COPY . .
 
-# Set the Python path to use uv's virtual environment
-ENV PATH="/app/.venv/bin:$PATH"
-
 # Run the application
-CMD ["uv", "run", "GinoProsciutto/main.py"]
+CMD ["python", "GinoProsciutto/main.py"]

@@ -36,9 +36,11 @@ class Utils:
     status_commands = [
         {"pc info": ["uname", "-a"]},
         {"🕐 uptime": ["uptime", "-p"]},
+        {"🌐 public IP": ["curl", "ipconfig.io"]},
+        {"🌐 liuk3 ddns": ["dig", "+short", "liuk3.ddns.net"]},
         {"📊 load": ["cat", "/proc/loadavg"]},
         # {"📊 mem": ["cat", "/proc/meminfo"]},
-        {"🌡️ temp": ["cat", "/sys/class/thermal/thermal_zone0/temp"]},
+        {"🌡️ temp": ["cat", "/sys/class/thermal/thermal_zone2/temp"]},
         {"Avaible space": ["df", "-h", "/"]},
         # ["pihole", "status"],
         # {"tgram_bot": ["systemctl", "is-active", "telegram_bot_py"]},

@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     volumes:
       - /sys:/sys:ro
-      - /proc:/proc:ro
+      - /proc:/proc
     environment:
       - SSH_USER=${SSH_USER}
       - SSH_HOST=${SSH_HOST}

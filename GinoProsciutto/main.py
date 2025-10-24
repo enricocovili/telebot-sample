@@ -67,7 +67,6 @@ if __name__ == "__main__":
     bot.add_event_handler(menu.exec)
 
     bot.add_event_handler(artiglio.artiglio)
-    bot.add_event_handler(artiglio.callback)
 
     logging.info(f"commands loaded")
 

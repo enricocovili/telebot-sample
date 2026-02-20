@@ -1,6 +1,0 @@
-Telethon
-python-dotenv
-yt-dlp
-hachoir
-bs4
-requests

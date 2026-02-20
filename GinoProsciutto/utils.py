@@ -20,6 +20,7 @@ class Utils:
     SPOTIFY_CLIENT_ID: str = config.get("SPOTIFY_CLIENT_ID")
     SPOTIFY_CLIENT_SECRET: str = config.get("SPOTIFY_CLIENT_SECRET")
     WHITELIST_IDS: list[int] = config.get("WHITELIST_IDS")
+    MINECRAFT_WHITELIST_IDS: list[int] = config.get("MINECRAFT_WHITELIST_IDS")
     artiglio_ranking_url: str = config.get("volley_ranking_url")
     TEMPERATURE_WARNING_LIMIT: float = config.get("TEMPERATURE_WARNING_LIMIT")
 

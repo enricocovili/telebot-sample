@@ -1,18 +1,14 @@
 [project]
 name = "telebot-sample"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dependencies = [
     "bs4>=0.0.2",
     "hachoir>=3.3.0",
-    "matplotlib>=3.9.4",
-    "pandas>=2.2.3",
-    "python-dotenv>=1.0.1",
-    "requests>=2.32.2",
+    "python-dotenv>=1.2.1",
+    "requests>=2.32.5",
     "schedule>=1.2.2",
-    "spotipy>=2.25.0",
-    "telethon>=1.38.1",
-    "yt-dlp>=2025.8.22",
+    "spotipy>=2.25.2",
+    "telethon>=1.42.0",
+    "yt-dlp>=2026.2.4",
 ]

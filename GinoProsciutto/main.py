@@ -32,10 +32,10 @@ def scheduler_loop():
         logging.error(f"Error in scheduler loop: {e}")
 
 
-@bot.on(events.NewMessage(pattern=Utils.pattern_constructor(["help", "start"])))
+@bot.on(events.NewMessage(pattern=r"^/(help|start)$"))
 async def send_author(event):
     await event.reply(
-        ("🇮🇹 Pizza Pasta Mandolino 🇮🇹,Made by @ilginop,").replace(",", "\n")
+        ("🇮🇹 Pizza Pasta Mandolino 🇮🇹\nMade by @ilginop").replace(",", "\n")
     )
 
 
@@ -67,6 +67,9 @@ if __name__ == "__main__":
     bot.add_event_handler(menu.exec)
 
     bot.add_event_handler(artiglio.artiglio)
+
+    bot.add_event_handler(minecraft_server.start_minecraft_server)
+    bot.add_event_handler(minecraft_server.stop_minecraft_server)
 
     logging.info(f"commands loaded")
 

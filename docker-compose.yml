@@ -12,6 +12,6 @@ services:
       - SSH_PASSWORD=${SSH_PASSWORD}
       - docker_mode=true
     tty: true
-    stdin_open: true
+    # stdin_open: true
     privileged: true
     network_mode: host # needed for that ssh shit i wrote to execute command from container to host

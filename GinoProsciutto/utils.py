@@ -106,6 +106,7 @@ class Utils:
                     ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
+                    timeout=10,
                     text=True,
                 )
             else:
@@ -113,9 +114,12 @@ class Utils:
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
+                    timeout=10,
                     text=True,
                 )
         except FileNotFoundError as e:
             return f"❌ {e}"
+        except subprocess.TimeoutExpired:
+            return f"❌ Command timed out"
         out = output.stdout if output.stdout else output.stderr
         return name + ": " + out if name else out

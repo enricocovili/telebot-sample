@@ -18,7 +18,7 @@ async def start_minecraft_server(event: events.newmessage.NewMessage):
     fake_privileged_chat_id = Utils.WHITELIST_IDS[0]
 
     bot = event.client
-    msg = await bot.send_message(fake_privileged_chat_id, "⏳ Starting Minecraft server...")
+    msg = await bot.send_message(event.chat_id, "⏳ Starting Minecraft server...")
 
     mac = os.getenv("MINECRAFT_SERVER_MAC")
     host = os.getenv("MINECRAFT_SERVER_HOST")
@@ -63,7 +63,7 @@ async def stop_minecraft_server(event: events.newmessage.NewMessage):
     fake_privileged_chat_id = Utils.WHITELIST_IDS[0]
 
     bot = event.client
-    msg = await bot.send_message(fake_privileged_chat_id, "⏳ Stopping Minecraft server...")
+    msg = await bot.send_message(event.chat_id, "⏳ Stopping Minecraft server...")
 
     host = os.getenv("MINECRAFT_SERVER_HOST")
     user = os.getenv("MINECRAFT_SERVER_USERNAME")

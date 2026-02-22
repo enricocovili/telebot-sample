@@ -29,11 +29,15 @@ async def start_minecraft_server(event: events.newmessage.NewMessage):
     logging.debug(f"Wake-on-LAN output: {wake_on_lan_output}")
     await msg.edit("⏳ Wake-on-LAN sent, waiting for host to come online...")
 
-    while True:
+    for attempt in range(5):
+        await msg.edit(f"⏳ Host is still offline, attempt {attempt + 1}/5...")
         result = await Utils._exec(fake_privileged_chat_id, ["ping", "-c", "1", host])
         if "1 received" in result:
             break
-        await asyncio.sleep(5)
+        await asyncio.sleep(10)
+    else:
+        await msg.edit("❌ Host failed to come online after 10 attempts")
+        return
 
     await msg.edit("✅ Host is online! Starting server... ⏳")
     start_command = await Utils._exec(

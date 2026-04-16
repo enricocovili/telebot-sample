@@ -85,7 +85,7 @@ class Utils:
         reducedtemp = f"{reducedtemp[:2]}.{reducedtemp[2:-1]}°C\n"
         return f"{' '.join(full_temp.split()[:-1])} {reducedtemp}"
 
-    async def _exec(chat_id, cmd, name=""):
+    async def _exec(chat_id, cmd, name="", notimeout=False):
         if not cmd:
             return "No command specified"
         if chat_id not in Utils.WHITELIST_IDS:
@@ -107,7 +107,7 @@ class Utils:
                     ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    timeout=10,
+                    timeout=10 if not notimeout else None,
                     text=True,
                 )
             else:
@@ -115,12 +115,12 @@ class Utils:
                     cmd,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
-                    timeout=10,
+                    timeout=10 if not notimeout else None,
                     text=True,
                 )
         except FileNotFoundError as e:
             return f"❌ {e}"
         except subprocess.TimeoutExpired:
-            return f"❌ Command timed out"
+            return "❌ Command timed out"
         out = output.stdout if output.stdout else output.stderr
         return name + ": " + out if name else out

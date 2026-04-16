@@ -3,6 +3,8 @@ from utils import Utils
 from handlers import *
 import logging, schedule, time, asyncio, threading
 from cronjob_monitor import journal_log
+from quart import Quart, request
+from telethon import types
 
 # setup logging to file
 logging.basicConfig(
@@ -14,10 +16,33 @@ logging.basicConfig(
 )
 
 bot = client.bot
+app = Quart(__name__)
 
 
 loop = asyncio.get_event_loop()
 
+@app.route("/watchtower-update", methods=["POST"])
+async def watchtower_update():
+    data = await request.get_data(as_text=True)
+    logging.info(f"Received watchtower update: {data}")
+    
+    buttons = [
+        [types.KeyboardButtonCallback(text="Update docker", data=b"update_docker")]
+    ]
+    
+    await bot.send_message(
+        Utils.WHITELIST_IDS[0], 
+        f"📢 Watchtower Update:\n{data}",
+        buttons=buttons
+    )
+    return "OK", 200
+
+@bot.on(events.CallbackQuery(data=b"update_docker"))
+async def handle_exec_command(event):
+    await event.edit("⏳ Updating docker containers with Watchtower...")
+    output = await Utils._exec(event.chat_id, "docker run --rm --name watchtower_singlerun --volume /var/run/docker.sock:/var/run/docker.sock nickfedor/watchtower -R".split(), name="Watchtower Update", notimeout=True)
+    await event.delete()
+    await bot.send_message(event.chat_id, f"📦 Watchtower Update Output:\n{output}")
 
 def scheduler_loop():
     schedule.every(10).seconds.do(
@@ -53,7 +78,7 @@ async def callback(event):
     await media_dwnld.download(event, url)
 
 
-if __name__ == "__main__":
+async def main():
     # clear tmp_song
     [file.unlink() for file in Utils.out_tmpl_ytdl.parent.glob("*")]
 
@@ -73,9 +98,17 @@ if __name__ == "__main__":
 
     logging.info(f"commands loaded")
 
-    bot.start(bot_token=Utils.TOKEN)
+    await bot.start(bot_token=Utils.TOKEN)
 
     threading.Thread(target=scheduler_loop, daemon=True).start()
 
-    # load_commands(bot)
-    bot.run_until_disconnected()
+    await asyncio.gather(
+        app.run_task(host="0.0.0.0", port=5000), 
+        bot.run_until_disconnected()
+    )
+
+if __name__ == "__main__":
+    try:
+        loop.run_until_complete(main())
+    except KeyboardInterrupt:
+        pass

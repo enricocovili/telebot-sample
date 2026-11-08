@@ -103,7 +103,7 @@ async def main():
     threading.Thread(target=scheduler_loop, daemon=True).start()
 
     await asyncio.gather(
-        app.run_task(host="0.0.0.0", port=5000), 
+        app.run_task(host="127.0.0.1", port=5000), 
         bot.run_until_disconnected()
     )
 

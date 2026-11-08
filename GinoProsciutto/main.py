@@ -1,7 +1,7 @@
 from telethon import events
 from utils import Utils
 from handlers import *
-import logging, schedule, time, asyncio, threading
+import logging, schedule, time, asyncio, threading, os, io
 from cronjob_monitor import journal_log
 from quart import Quart, request
 from telethon import types
@@ -31,9 +31,70 @@ async def watchtower_update():
     ]
     
     await bot.send_message(
-        Utils.WHITELIST_IDS[0], 
+        Utils.WHITELIST_IDS[0],
         f"📢 Watchtower Update:\n{data}",
         buttons=buttons
+    )
+    return "OK", 200
+
+# Optional shared secret for /security-report. If set (via the environment),
+# requests must carry a matching X-Auth-Token header; if unset, the route is
+# open like /watchtower-update.
+SECURITY_REPORT_TOKEN = os.getenv("SECURITY_REPORT_TOKEN")
+
+@app.route("/security-report", methods=["POST"])
+async def security_report():
+    if SECURITY_REPORT_TOKEN:
+        if request.headers.get("X-Auth-Token") != SECURITY_REPORT_TOKEN:
+            logging.warning("security-report: rejected request (bad/missing token)")
+            return "Unauthorized", 401
+
+    data = await request.get_data(as_text=True)
+    if not data.strip():
+        return "Empty body", 400
+
+    logging.info(f"Received security report ({len(data)} chars)")
+
+    # Telegram hard-caps messages at 4096 chars; truncate defensively.
+    if len(data) > 4096:
+        data = data[:4080] + "\n… (truncated)"
+
+    # Clean delivery: no prefix, no buttons — the sender controls formatting.
+    await bot.send_message(Utils.WHITELIST_IDS[0], data, link_preview=False)
+    return "OK", 200
+
+@app.route("/security-report-file", methods=["POST"])
+async def security_report_file():
+    if SECURITY_REPORT_TOKEN:
+        if request.headers.get("X-Auth-Token") != SECURITY_REPORT_TOKEN:
+            logging.warning("security-report-file: rejected request (bad/missing token)")
+            return "Unauthorized", 401
+
+    files = await request.files
+    form = await request.form
+    upload = files.get("file")
+    if upload is None:
+        return "No file provided (form field 'file')", 400
+
+    filename = upload.filename or "report.md"
+    payload = upload.read()
+    if not payload:
+        return "Empty file", 400
+
+    caption = form.get("caption", "") or None
+    if caption and len(caption) > 1024:  # Telegram caption limit
+        caption = caption[:1010] + "\n… (truncated)"
+
+    logging.info(f"Received report file '{filename}' ({len(payload)} bytes)")
+
+    bio = io.BytesIO(payload)
+    bio.name = filename
+    await bot.send_file(
+        Utils.WHITELIST_IDS[0],
+        bio,
+        caption=caption,
+        force_document=True,
+        attributes=[types.DocumentAttributeFilename(filename)],
     )
     return "OK", 200
 
@@ -95,6 +156,9 @@ async def main():
 
     bot.add_event_handler(minecraft_server.start_minecraft_server)
     bot.add_event_handler(minecraft_server.stop_minecraft_server)
+
+    bot.add_event_handler(agent.callback)
+    bot.add_event_handler(agent.reply)
 
     logging.info(f"commands loaded")
 

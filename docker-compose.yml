@@ -11,6 +11,12 @@ services:
       - SSH_HOST=${SSH_HOST}
       - SSH_PASSWORD=${SSH_PASSWORD}
       - docker_mode=true
+      # Optional: set SECURITY_REPORT_TOKEN in .env to require an X-Auth-Token
+      # header on POST /security-report. Empty = route is open (no auth).
+      - SECURITY_REPORT_TOKEN=${SECURITY_REPORT_TOKEN:-}
+      # Ponte verso l'agente di status.enricocovili.com (stesso valore di AGENT_HOOK_TOKEN là).
+      - AGENT_HOOK_URL=http://127.0.0.1:8091
+      - AGENT_HOOK_TOKEN=${AGENT_HOOK_TOKEN:-}
     tty: true
     # stdin_open: true
     privileged: true
